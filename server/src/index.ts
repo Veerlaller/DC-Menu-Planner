@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import healthRoutes from './routes/health.js';
 import debugRoutes from './routes/debug.js';
+import onboardingRoutes from './routes/onboarding.js';
+import todayRoutes from './routes/today.js';
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +27,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Routes
 app.use('/', healthRoutes);
 app.use('/', debugRoutes);
+app.use('/api', onboardingRoutes);
+app.use('/api', todayRoutes);
 
 /**
  * 404 handler for undefined routes
