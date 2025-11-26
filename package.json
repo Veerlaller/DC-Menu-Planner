@@ -13,25 +13,8 @@
   "license": "ISC",
   "author": "Veer Laller, Kartik Yedumbaka",
   "type": "commonjs",
-  "main": "dist/scraper/index.js",
   "scripts": {
-    "build": "tsc",
-    "dev": "ts-node src/scraper/index.ts",
-    "scrape": "npm run build && node dist/scraper/index.js",
-    "scrape:dev": "ts-node src/scraper/index.ts",
-    "scrape:db": "ts-node src/scraper/index.ts --clear",
+    "scrape": "cd scraper && npm run scrape",
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
-    "axios": "^1.6.2",
-    "cheerio": "^1.0.0-rc.12",
-    "dotenv": "^16.3.1",
-    "playwright": "^1.57.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.10.5",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
   }
 }

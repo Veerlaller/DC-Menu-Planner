@@ -1,0 +1,27 @@
+{
+  "name": "dc-menu-scraper",
+  "version": "1.0.0",
+  "description": "UC Davis dining hall menu scraper",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "scrape": "npm run build && node dist/index.js",
+    "dev": "ts-node index.ts"
+  },
+  "keywords": ["ucdavis", "dining", "scraper", "nutrition"],
+  "author": "Veer Laller, Kartik Yedumbaka",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.3.1",
+    "playwright": "^1.57.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
+

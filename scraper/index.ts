@@ -19,7 +19,7 @@ async function main() {
 Options:
   --date=YYYY-MM-DD      Scrape menu for specific date (default: today)
   --hall=HALL_NAME       Scrape only a specific hall (Latitude, Cuarto, Segundo, Tercero)
-  --output=PATH          Path to save JSON output (default: ./data/menu.json)
+  --output=PATH          Path to save JSON output (default: ../data/menu.json)
   --no-db                Skip storing data in Supabase (only save to JSON)
   --clear                Clear existing menu data for the date before scraping
   --help, -h             Show this help message
@@ -48,7 +48,7 @@ Environment Variables (required for database storage):
   const clearArg = args.includes('--clear');
   
   const date = dateArg ? new Date(dateArg.split('=')[1]) : new Date();
-  const outputPath = outputArg ? outputArg.split('=')[1] : './data/menu.json';
+  const outputPath = outputArg ? outputArg.split('=')[1] : '../data/menu.json';
   const useDatabase = !noDbArg;
   
   // Initialize Supabase storage if needed
