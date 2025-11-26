@@ -158,29 +158,52 @@ export class UCDavisMenuScraper {
       console.log(`   ⚠️  Could not find specific ${targetDay} section, searching entire modal...`);
     }
 
-    // Find zone containers (divs with class containing zone colors) within the day section
-    $searchArea.find('div.red, div.yellow, div.blue, div.green, div.purple, div.pink').each((zoneIndex, zoneElement) => {
-      try {
-        const $zone = $(zoneElement);
-        
-        // Extract zone/station name from h3 heading
-        const stationName = $zone.find('h3').first().text().trim();
-        
-        // Skip if this is just headers/hours info (no actual menu)
-        if (!stationName || stationName.toLowerCase().includes('zone hours')) {
-          return;
+    // Find all meal period sections (Breakfast, Lunch, Dinner headers)
+    $searchArea.find('h2.stickyMealHeader, h2#breakfast, h2#lunch, h2#dinner').each((mealIndex, mealHeader) => {
+      const $mealHeader = $(mealHeader);
+      const mealText = $mealHeader.text().trim().toLowerCase();
+      
+      let mealPeriod = MealPeriod.LUNCH; // default
+      if (mealText.includes('breakfast')) mealPeriod = MealPeriod.BREAKFAST;
+      else if (mealText.includes('lunch')) mealPeriod = MealPeriod.LUNCH;
+      else if (mealText.includes('dinner')) mealPeriod = MealPeriod.DINNER;
+      else if (mealText.includes('late')) mealPeriod = MealPeriod.LATE_NIGHT;
+      
+      console.log(`   🍽️  Processing ${mealText} section...`);
+      
+      // Find all zones that come after this meal header (until the next meal header)
+      let $currentElement = $mealHeader.next();
+      
+      while ($currentElement.length > 0) {
+        // Stop if we hit another meal header
+        if ($currentElement.is('h2') && $currentElement.hasClass('stickyMealHeader')) {
+          break;
         }
         
-        // Check if zone has no dishes
-        const noDisheMsg = $zone.find('.no-dishes-message').text();
-        if (noDisheMsg.toLowerCase().includes('no dishes')) {
-          return; // Skip this zone
-        }
+        // Check if this element or its descendants contain zone divs
+        const $zones = $currentElement.find('div.red, div.yellow, div.blue, div.green, div.purple, div.pink');
+        
+        $zones.each((zoneIndex, zoneElement) => {
+          const $zone = $(zoneElement);
+          
+          // Extract zone/station name from h3 heading
+          const stationName = $zone.find('h3').first().text().trim();
+          
+          // Skip if this is just headers/hours info (no actual menu)
+          if (!stationName || stationName.toLowerCase().includes('zone hours')) {
+            return;
+          }
+          
+          // Check if zone has no dishes
+          const noDisheMsg = $zone.find('.no-dishes-message').text();
+          if (noDisheMsg.toLowerCase().includes('no dishes')) {
+            return; // Skip this zone
+          }
 
-        // Find all panel divs (actual food dishes)
-        const $dishes = $zone.find('.panel');
-        
-        $dishes.each((itemIndex, itemElement) => {
+          // Find all panel divs (actual food dishes)
+          const $dishes = $zone.find('.panel');
+          
+          $dishes.each((itemIndex, itemElement) => {
           try {
             const $item = $(itemElement);
             
@@ -204,9 +227,6 @@ export class UCDavisMenuScraper {
 
             // Get the full text content for ingredients/details
             const fullText = $item.text().trim();
-            
-            // Try to determine meal period from context
-            const mealPeriod = this.extractMealPeriodFromContext($, $zone);
 
             // Extract ingredients text (everything after the dish name)
             const ingredientsText = fullText.replace(name, '').trim();
@@ -237,8 +257,10 @@ export class UCDavisMenuScraper {
             console.error('Error parsing menu item:', error);
           }
         });
-      } catch (error) {
-        console.error('Error parsing zone:', error);
+      });
+        
+        // Move to next sibling
+        $currentElement = $currentElement.next();
       }
     });
 

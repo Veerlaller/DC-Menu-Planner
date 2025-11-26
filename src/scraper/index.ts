@@ -39,21 +39,34 @@ async function main() {
       console.log(`Scraping ${hall} for ${date.toDateString()}...\n`);
       const items = await scraper.fetchMenu(hall, date);
       
+      // Organize by hall and meal
+      const organized = organizeMenuByHallAndMeal(items);
+      
       result = {
         success: true,
-        menuItems: items,
-        scrapedAt: new Date().toISOString()
+        scrapedAt: new Date().toISOString(),
+        ...organized
       };
       
       console.log(`\n✓ Scraped ${items.length} menu items`);
     } else {
       console.log(`Scraping all dining halls for ${date.toDateString()}...\n`);
-      result = await scraper.fetchAllMenus(date);
+      const scraperResult = await scraper.fetchAllMenus(date);
       
-      console.log(`\n✓ Total items scraped: ${result.menuItems.length}`);
-      if (result.errors && result.errors.length > 0) {
-        console.log(`⚠️  Errors encountered: ${result.errors.length}`);
-        result.errors.forEach(err => console.log(`  - ${err}`));
+      // Organize by hall and meal
+      const organized = organizeMenuByHallAndMeal(scraperResult.menuItems);
+      
+      result = {
+        success: scraperResult.success,
+        scrapedAt: scraperResult.scrapedAt,
+        ...organized,
+        errors: scraperResult.errors
+      };
+      
+      console.log(`\n✓ Total items scraped: ${scraperResult.menuItems.length}`);
+      if (scraperResult.errors && scraperResult.errors.length > 0) {
+        console.log(`⚠️  Errors encountered: ${scraperResult.errors.length}`);
+        scraperResult.errors.forEach(err => console.log(`  - ${err}`));
       }
     }
     
@@ -67,22 +80,99 @@ async function main() {
     console.log(`\n📁 Results saved to: ${outputPath}`);
     
     // Print summary
-    if (result.menuItems.length > 0) {
-      console.log('\n📊 Summary:');
-      const byHall = result.menuItems.reduce((acc, item) => {
-        acc[item.hall] = (acc[item.hall] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      Object.entries(byHall).forEach(([hall, count]) => {
-        console.log(`  ${hall}: ${count} items`);
-      });
-    }
+    console.log('\n📊 Summary:');
+    const halls = ['latitude', 'cuarto', 'segundo', 'tercero'];
+    halls.forEach(hall => {
+      if (result[hall]) {
+        const zones = ['red', 'yellow', 'blue', 'green', 'purple', 'pink'];
+        
+        let breakfastTotal = 0;
+        let lunchTotal = 0;
+        let dinnerTotal = 0;
+        
+        zones.forEach(zone => {
+          breakfastTotal += result[hall].breakfast[zone]?.length || 0;
+          lunchTotal += result[hall].lunch[zone]?.length || 0;
+          dinnerTotal += result[hall].dinner[zone]?.length || 0;
+        });
+        
+        const totalItems = breakfastTotal + lunchTotal + dinnerTotal;
+        
+        if (totalItems > 0) {
+          console.log(`  ${hall.charAt(0).toUpperCase() + hall.slice(1)}: ${totalItems} items`);
+          console.log(`    Breakfast: ${breakfastTotal}, Lunch: ${lunchTotal}, Dinner: ${dinnerTotal}`);
+        }
+      }
+    });
     
   } catch (error) {
     console.error('\n❌ Error:', error);
     process.exit(1);
   }
+}
+
+/**
+ * Organize menu items by hall, meal type, and zone
+ */
+function organizeMenuByHallAndMeal(items: any[]) {
+    const organized: any = {
+      latitude: { 
+        breakfast: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }, 
+        lunch: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }, 
+        dinner: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }
+      },
+      cuarto: { 
+        breakfast: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }, 
+        lunch: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }, 
+        dinner: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }
+      },
+      segundo: { 
+        breakfast: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }, 
+        lunch: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }, 
+        dinner: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }
+      },
+      tercero: { 
+        breakfast: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }, 
+        lunch: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }, 
+        dinner: { red: [], yellow: [], blue: [], green: [], purple: [], pink: [] }
+      }
+    };
+
+    items.forEach(item => {
+      const hallKey = item.hall.toLowerCase();
+      const mealKey = item.meal.toLowerCase().replace(/\s+/g, '');
+      
+      // Map meal period to key
+      const mealMap: Record<string, string> = {
+        'breakfast': 'breakfast',
+        'lunch': 'lunch',
+        'dinner': 'dinner'
+      };
+      
+      const targetMeal = mealMap[mealKey];
+      
+      // Skip late night items or items that don't match our meal types
+      if (!targetMeal) {
+        return;
+      }
+      
+      // Extract zone color from station name (e.g., "Red Zone" -> "red")
+      const station = item.station.toLowerCase();
+      let zoneKey = 'red'; // default
+      
+      if (station.includes('red')) zoneKey = 'red';
+      else if (station.includes('yellow')) zoneKey = 'yellow';
+      else if (station.includes('blue')) zoneKey = 'blue';
+      else if (station.includes('green')) zoneKey = 'green';
+      else if (station.includes('purple')) zoneKey = 'purple';
+      else if (station.includes('pink')) zoneKey = 'pink';
+      
+      if (organized[hallKey] && organized[hallKey][targetMeal]) {
+        organized[hallKey][targetMeal][zoneKey].push(item);
+      }
+    });
+
+    return organized;
 }
 
 // Run if called directly
