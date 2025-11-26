@@ -1,7 +1,7 @@
 {
   "name": "dc-menu-planner",
   "version": "1.0.0",
-  "description": "",
+  "description": "Meal planning and macro tracking app for UC Davis dining halls",
   "homepage": "https://github.com/Veerlaller/DC-Menu-Planner#readme",
   "bugs": {
     "url": "https://github.com/Veerlaller/DC-Menu-Planner/issues"
@@ -13,11 +13,22 @@
   "license": "ISC",
   "author": "Veer Laller, Kartik Yedumbaka",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "dist/scraper/index.js",
   "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/scraper/index.ts",
+    "scrape": "npm run build && node dist/scraper/index.js",
+    "scrape:dev": "ts-node src/scraper/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "react-native": "^0.82.1"
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0-rc.12",
+    "playwright": "^1.57.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }
