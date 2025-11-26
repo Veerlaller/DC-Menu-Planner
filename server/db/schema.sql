@@ -202,6 +202,7 @@ CREATE INDEX IF NOT EXISTS idx_meal_logs_logged_at ON meal_logs(logged_at);
 -- ============================================================================
 INSERT INTO dining_halls (name, short_name, location, is_active)
 VALUES 
+    ('Latitude Restaurant', 'Latitude', 'Latitude Area, UC Davis', true),
     ('Segundo Dining Commons', 'Segundo', 'Segundo Area, UC Davis', true),
     ('Tercero Dining Commons', 'Tercero', 'Tercero Area, UC Davis', true),
     ('Cuarto Dining Commons', 'Cuarto', 'Cuarto Area, UC Davis', true)

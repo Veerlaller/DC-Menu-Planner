@@ -3,6 +3,7 @@
  */
 
 import { UCDavisMenuScraper } from './ucdavis-menu-scraper';
+import { SupabaseStorage } from './supabase-storage';
 import { DiningHall } from './types';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -10,19 +11,72 @@ import * as path from 'path';
 async function main() {
   console.log('🍽️  UC Davis Menu Scraper\n');
   
+  // Show usage if help flag is present
+  const args = process.argv.slice(2);
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`Usage: npm run scrape:dev [options]
+
+Options:
+  --date=YYYY-MM-DD      Scrape menu for specific date (default: today)
+  --hall=HALL_NAME       Scrape only a specific hall (Latitude, Cuarto, Segundo, Tercero)
+  --output=PATH          Path to save JSON output (default: ./data/menu.json)
+  --no-db                Skip storing data in Supabase (only save to JSON)
+  --clear                Clear existing menu data for the date before scraping
+  --help, -h             Show this help message
+
+Examples:
+  npm run scrape:dev                                    # Scrape all halls for today, store in DB and JSON
+  npm run scrape:dev -- --date=2025-12-01               # Scrape specific date
+  npm run scrape:dev -- --hall=Cuarto                   # Scrape only Cuarto
+  npm run scrape:dev -- --no-db                         # Only save to JSON, skip database
+  npm run scrape:dev -- --clear --date=2025-12-01       # Clear and re-scrape specific date
+
+Environment Variables (required for database storage):
+  SUPABASE_URL                Your Supabase project URL
+  SUPABASE_SERVICE_ROLE_KEY   Your Supabase service role key
+`);
+    process.exit(0);
+  }
+  
   const scraper = new UCDavisMenuScraper();
   
   // Parse command line arguments
-  const args = process.argv.slice(2);
   const dateArg = args.find(arg => arg.startsWith('--date='));
   const hallArg = args.find(arg => arg.startsWith('--hall='));
   const outputArg = args.find(arg => arg.startsWith('--output='));
+  const noDbArg = args.includes('--no-db');
+  const clearArg = args.includes('--clear');
   
   const date = dateArg ? new Date(dateArg.split('=')[1]) : new Date();
   const outputPath = outputArg ? outputArg.split('=')[1] : './data/menu.json';
+  const useDatabase = !noDbArg;
+  
+  // Initialize Supabase storage if needed
+  let storage: SupabaseStorage | null = null;
+  if (useDatabase) {
+    try {
+      storage = new SupabaseStorage();
+      const connected = await storage.testConnection();
+      if (!connected) {
+        console.error('❌ Failed to connect to Supabase. Use --no-db to skip database storage.');
+        process.exit(1);
+      }
+      console.log('✓ Connected to Supabase\n');
+      
+      // Clear existing data if requested
+      if (clearArg) {
+        await storage.clearMenuForDate(date);
+      }
+    } catch (error: any) {
+      console.error('❌ Supabase initialization failed:', error.message);
+      console.log('Use --no-db to skip database storage.\n');
+      process.exit(1);
+    }
+  }
   
   try {
     let result;
+    let allMenuItems: any[] = [];
     
     if (hallArg) {
       const hallName = hallArg.split('=')[1];
@@ -38,6 +92,7 @@ async function main() {
       
       console.log(`Scraping ${hall} for ${date.toDateString()}...\n`);
       const items = await scraper.fetchMenu(hall, date);
+      allMenuItems = items;
       
       // Organize by hall and meal
       const organized = organizeMenuByHallAndMeal(items);
@@ -52,6 +107,7 @@ async function main() {
     } else {
       console.log(`Scraping all dining halls for ${date.toDateString()}...\n`);
       const scraperResult = await scraper.fetchAllMenus(date);
+      allMenuItems = scraperResult.menuItems;
       
       // Organize by hall and meal
       const organized = organizeMenuByHallAndMeal(scraperResult.menuItems);
@@ -70,7 +126,20 @@ async function main() {
       }
     }
     
-    // Save results
+    // Store in Supabase if enabled
+    if (storage) {
+      const storageResult = await storage.storeMenuItems(allMenuItems, date);
+      
+      if (storageResult.errors.length > 0) {
+        console.log('\n⚠️  Some items failed to store:');
+        storageResult.errors.slice(0, 5).forEach(err => console.log(`  - ${err}`));
+        if (storageResult.errors.length > 5) {
+          console.log(`  ... and ${storageResult.errors.length - 5} more errors`);
+        }
+      }
+    }
+    
+    // Save results to JSON file
     const dir = path.dirname(outputPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
