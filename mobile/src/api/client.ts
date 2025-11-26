@@ -1,6 +1,5 @@
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import uuid from 'react-native-uuid';
+import { supabase } from '../lib/supabase';
 
 // Backend API URL
 const API_BASE_URL = __DEV__ 
@@ -15,23 +14,19 @@ export const apiClient = axios.create({
   },
 });
 
-// Generate a proper UUID for testing (in production this would come from auth)
-const getUserId = async (): Promise<string> => {
-  let userId = await AsyncStorage.getItem('tempUserId');
-  if (!userId) {
-    // Generate a proper UUID v4 format
-    userId = uuid.v4() as string;
-    await AsyncStorage.setItem('tempUserId', userId);
-  }
-  return userId;
-};
-
-// Request interceptor for adding user ID header
+// Request interceptor for adding authentication
 apiClient.interceptors.request.use(
   async (config) => {
-    // Add user ID header (for authentication)
-    const userId = await getUserId();
-    config.headers['x-user-id'] = userId;
+    // Get current session
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session?.access_token) {
+      // Add JWT token for backend verification
+      config.headers['Authorization'] = `Bearer ${session.access_token}`;
+      // Add user ID for convenience
+      config.headers['x-user-id'] = session.user.id;
+    }
+    
     return config;
   },
   (error) => {

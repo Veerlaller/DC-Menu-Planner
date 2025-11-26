@@ -9,21 +9,26 @@ import {
   Alert,
 } from 'react-native';
 import { useStore } from '../../store/useStore';
+import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
 
 const ProfileScreen: React.FC = () => {
   const { userProfile, userPreferences, reset } = useStore();
+  const { user, signOut } = useAuth();
 
-  const handleLogout = () => {
+  const handleSignOut = () => {
     Alert.alert(
-      'Reset App',
-      'Are you sure you want to reset? This will clear all your data.',
+      'Sign Out',
+      'Are you sure you want to sign out?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Reset',
+          text: 'Sign Out',
           style: 'destructive',
-          onPress: () => reset(),
+          onPress: async () => {
+            await signOut();
+            reset();
+          },
         },
       ]
     );
@@ -152,6 +157,17 @@ const ProfileScreen: React.FC = () => {
           </View>
         )}
 
+        {/* User Account Info */}
+        {user && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Account</Text>
+            <View style={styles.accountInfo}>
+              <Text style={styles.accountLabel}>Email</Text>
+              <Text style={styles.accountValue}>{user.email}</Text>
+            </View>
+          </View>
+        )}
+
         {/* Actions */}
         <View style={styles.actionsSection}>
           <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
@@ -162,11 +178,11 @@ const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.dangerButton]}
-            onPress={handleLogout}
+            onPress={handleSignOut}
             activeOpacity={0.8}
           >
             <Text style={[styles.actionButtonText, styles.dangerButtonText]}>
-              Reset App
+              Sign Out
             </Text>
           </TouchableOpacity>
         </View>
@@ -367,6 +383,18 @@ const styles = StyleSheet.create({
   allergyText: {
     fontSize: fontSize.base,
     color: colors.error,
+  },
+  accountInfo: {
+    gap: spacing.xs,
+  },
+  accountLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  accountValue: {
+    fontSize: fontSize.base,
+    fontWeight: '500',
+    color: colors.text,
   },
   actionsSection: {
     gap: spacing.sm,

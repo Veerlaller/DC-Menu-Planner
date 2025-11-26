@@ -2,6 +2,16 @@ node_modules/
 dist/
 *.log
 .env
+.env.local
 .DS_Store
 data/*.json
 data/*.csv
+
+# Environment files
+mobile/.env
+server/.env
+scraper/.env
+
+# Expo
+mobile/.expo/
+mobile/dist/
