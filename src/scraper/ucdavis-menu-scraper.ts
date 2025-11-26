@@ -299,28 +299,39 @@ export class UCDavisMenuScraper {
 
   /**
    * Extract nutrition information from text (ingredients)
+   * UC Davis format: "Calories: 312.64\n\tFat (g): 23.48\n\tCarbohydrates (g): 25.65"
    */
   private extractNutritionFromText(text: string, itemName: string): NutritionInfo | null {
     try {
-      // UC Davis nutrition format: "per manufacturer, contains: ..."
-      // Look for nutrition facts if present
       const nutrition: NutritionInfo = {
         menuItemName: itemName
       };
 
-      // Parse nutrition values from text
-      const caloriesMatch = text.match(/(\d+)\s*calor/i);
-      const proteinMatch = text.match(/(\d+\.?\d*)\s*g\s*protein/i);
-      const carbsMatch = text.match(/(\d+\.?\d*)\s*g\s*carb/i);
-      const fatMatch = text.match(/(\d+\.?\d*)\s*g\s*fat/i);
+      // Parse nutrition values - UC Davis format with labels and colons
+      const caloriesMatch = text.match(/Calories:\s*(\d+\.?\d*)/i);
+      const fatMatch = text.match(/Fat\s*\(g\):\s*(\d+\.?\d*)/i);
+      const carbsMatch = text.match(/Carbohydrates\s*\(g\):\s*(\d+\.?\d*)/i);
+      const sugarMatch = text.match(/Sugar:\s*(\d+\.?\d*)/i);
+      const proteinMatch = text.match(/Protein\s*\(g\):\s*(\d+\.?\d*)/i);
+      const fiberMatch = text.match(/Fiber\s*\(g\):\s*(\d+\.?\d*)/i);
+      const sodiumMatch = text.match(/Sodium\s*\(mg\):\s*(\d+\.?\d*)/i);
 
-      if (caloriesMatch) nutrition.calories = parseInt(caloriesMatch[1]);
-      if (proteinMatch) nutrition.protein = parseFloat(proteinMatch[1]);
-      if (carbsMatch) nutrition.carbs = parseFloat(carbsMatch[1]);
+      if (caloriesMatch) nutrition.calories = parseFloat(caloriesMatch[1]);
       if (fatMatch) nutrition.fat = parseFloat(fatMatch[1]);
+      if (carbsMatch) nutrition.carbs = parseFloat(carbsMatch[1]);
+      if (sugarMatch) nutrition.sugar = parseFloat(sugarMatch[1]);
+      if (proteinMatch) nutrition.protein = parseFloat(proteinMatch[1]);
+      if (fiberMatch) nutrition.fiber = parseFloat(fiberMatch[1]);
+      if (sodiumMatch) nutrition.sodium = parseFloat(sodiumMatch[1]);
 
-      // Return null if no nutrition data found
-      return Object.keys(nutrition).length > 1 ? nutrition : null;
+      // Also look for serving size
+      const servingSizeMatch = text.match(/Serving Size:\s*([^\n]+)/i);
+      if (servingSizeMatch) {
+        nutrition.servingSize = servingSizeMatch[1].trim();
+      }
+
+      // Return null if no nutrition data found (need at least calories)
+      return nutrition.calories ? nutrition : null;
     } catch (error) {
       return null;
     }
