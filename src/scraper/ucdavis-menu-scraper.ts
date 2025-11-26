@@ -177,23 +177,15 @@ export class UCDavisMenuScraper {
           return; // Skip this zone
         }
 
-        // Find all panel divs or panel-title h4 elements (actual food dishes)
-        const $dishes = $zone.find('.panel, .panel-title');
+        // Find all panel divs (actual food dishes)
+        const $dishes = $zone.find('.panel');
         
         $dishes.each((itemIndex, itemElement) => {
           try {
             const $item = $(itemElement);
             
-            // Extract dish name from panel-title or panel heading
-            let name = '';
-            
-            if ($item.hasClass('panel-title')) {
-              // If it's an h4.panel-title, get its text directly
-              name = $item.text().trim();
-            } else if ($item.hasClass('panel')) {
-              // If it's a div.panel, look for panel-title inside
-              name = $item.find('.panel-title, h4').first().text().trim();
-            }
+            // Extract dish name from panel-title inside the panel
+            const name = $item.find('.panel-title, h4').first().text().trim();
             
             // Skip if no valid name
             if (!name || name.length < 3) {
@@ -219,6 +211,9 @@ export class UCDavisMenuScraper {
             // Extract ingredients text (everything after the dish name)
             const ingredientsText = fullText.replace(name, '').trim();
 
+            // Extract dietary flags from CSS classes and images
+            const dietaryFlags = this.extractDietaryFlagsFromPanel($item);
+
             const menuItem: MenuItemWithNutrition = {
               id: this.generateId(hall, date, stationName, name),
               name,
@@ -227,7 +222,7 @@ export class UCDavisMenuScraper {
               meal: mealPeriod,
               date,
               allergens: this.extractAllergensFromText(ingredientsText),
-              dietaryFlags: this.extractDietaryFlagsFromText(ingredientsText),
+              dietaryFlags,
               description: ingredientsText.substring(0, 200) // First 200 chars as description
             };
 
@@ -400,6 +395,50 @@ export class UCDavisMenuScraper {
       }
     });
 
+    return flags;
+  }
+
+  /**
+   * Extract dietary flags from panel element (CSS classes and images)
+   */
+  private extractDietaryFlagsFromPanel($element: cheerio.Cheerio<any>): string[] {
+    const flags: string[] = [];
+    
+    // Check CSS classes
+    const classes = $element.attr('class') || '';
+    
+    if (classes.includes('isVegan')) {
+      flags.push('vegan');
+    }
+    if (classes.includes('isVegetarian')) {
+      flags.push('vegetarian');
+    }
+    if (classes.includes('isHalal')) {
+      flags.push('halal');
+    }
+    
+    // Also check for dietary flag images (alt text)
+    $element.find('img').each((i, img) => {
+      const alt = (cheerio.load(img)('img').attr('alt') || '').toLowerCase();
+      const src = (cheerio.load(img)('img').attr('src') || '').toLowerCase();
+      
+      if (alt.includes('vegan') || src.includes('vegan')) {
+        if (!flags.includes('vegan')) flags.push('vegan');
+      }
+      if (alt.includes('vegetarian') || src.includes('vegetarian')) {
+        if (!flags.includes('vegetarian')) flags.push('vegetarian');
+      }
+      if (alt.includes('halal') || src.includes('halal')) {
+        if (!flags.includes('halal')) flags.push('halal');
+      }
+      if (alt.includes('kosher') || src.includes('kosher')) {
+        if (!flags.includes('kosher')) flags.push('kosher');
+      }
+      if (alt.includes('gluten') || src.includes('gluten')) {
+        if (!flags.includes('gluten-free')) flags.push('gluten-free');
+      }
+    });
+    
     return flags;
   }
 
