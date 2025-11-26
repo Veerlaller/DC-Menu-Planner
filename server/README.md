@@ -16,6 +16,8 @@ Backend API server for the UC Davis Diet Tracker mobile application.
 server/
 ├── src/
 │   ├── index.ts           # Main Express application
+│   ├── routes/
+│   │   └── health.ts      # Health check routes
 │   └── lib/
 │       └── supabase.ts    # Supabase client configuration
 ├── dist/                  # Compiled JavaScript (generated)
@@ -54,7 +56,7 @@ cp .env.example .env
 Then edit `.env` and add your Supabase credentials:
 
 ```env
-PORT=3000
+PORT=4000
 NODE_ENV=development
 
 SUPABASE_URL=https://your-project.supabase.co
@@ -153,7 +155,7 @@ The Supabase client is configured with the **service role key**, which bypasses 
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `PORT` | Port number for the server | No (default: 3000) |
+| `PORT` | Port number for the server | No (default: 4000) |
 | `NODE_ENV` | Environment (development/production) | No (default: development) |
 | `SUPABASE_URL` | Your Supabase project URL | Yes |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key from Supabase | Yes |
@@ -173,7 +175,16 @@ Make sure you've created a `.env` file and added your Supabase credentials.
 
 ### Port already in use
 
-Change the `PORT` in your `.env` file to a different number (e.g., 3001).
+Change the `PORT` in your `.env` file to a different number (e.g., 4001).
+
+To find and kill a process on a specific port:
+```bash
+# Find process on port 4000
+lsof -ti:4000
+
+# Kill the process
+lsof -ti:4000 | xargs kill -9
+```
 
 ## Next Steps
 
