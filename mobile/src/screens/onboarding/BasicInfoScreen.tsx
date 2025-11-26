@@ -24,8 +24,8 @@ interface Props {
 const BasicInfoScreen: React.FC<Props> = ({ navigation }) => {
   const { onboardingData, setOnboardingData } = useStore();
   
-  const [height, setHeight] = useState(onboardingData.height_cm?.toString() || '');
-  const [weight, setWeight] = useState(onboardingData.weight_kg?.toString() || '');
+  const [height, setHeight] = useState(onboardingData.height_inches?.toString() || '');
+  const [weight, setWeight] = useState(onboardingData.weight_lbs?.toString() || '');
   const [age, setAge] = useState(onboardingData.age?.toString() || '');
   const [sex, setSex] = useState<'male' | 'female' | 'other' | undefined>(onboardingData.sex);
 
@@ -45,8 +45,8 @@ const BasicInfoScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     setOnboardingData({
-      height_cm: heightNum,
-      weight_kg: weightNum,
+      height_inches: heightNum,
+      weight_lbs: weightNum,
       age: ageNum,
       sex,
     });
@@ -72,24 +72,25 @@ const BasicInfoScreen: React.FC<Props> = ({ navigation }) => {
 
             <View style={styles.form}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Height (cm)</Text>
+                <Text style={styles.label}>Height (inches)</Text>
                 <TextInput
                   style={styles.input}
                   value={height}
                   onChangeText={setHeight}
-                  placeholder="170"
+                  placeholder="70"
                   keyboardType="numeric"
                   placeholderTextColor={colors.gray400}
                 />
+                <Text style={styles.hint}>Example: 5'10" = 70 inches</Text>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Weight (kg)</Text>
+                <Text style={styles.label}>Weight (lbs)</Text>
                 <TextInput
                   style={styles.input}
                   value={weight}
                   onChangeText={setWeight}
-                  placeholder="70"
+                  placeholder="154"
                   keyboardType="numeric"
                   placeholderTextColor={colors.gray400}
                 />
@@ -200,6 +201,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.base,
     fontWeight: '600',
     color: colors.text,
+  },
+  hint: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
   },
   input: {
     backgroundColor: colors.gray50,

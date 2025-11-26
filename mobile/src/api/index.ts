@@ -64,14 +64,14 @@ export const updateUserPreferences = async (
 };
 
 export const completeOnboarding = async (
-  userId: string,
   data: OnboardingData
 ): Promise<{ profile: UserProfile; preferences: UserPreferences }> => {
-  const response = await apiClient.post<
-    ApiResponse<{ profile: UserProfile; preferences: UserPreferences }>
-  >(`/users/${userId}/onboarding`, data);
-  if (response.data.success && response.data.data) {
-    return response.data.data;
+  const response = await apiClient.post<any>('/onboarding', data);
+  if (response.data.success) {
+    return {
+      profile: response.data.profile,
+      preferences: response.data.preferences,
+    };
   }
   throw new Error(response.data.error || 'Failed to complete onboarding');
 };
@@ -80,16 +80,23 @@ export const completeOnboarding = async (
 // DAILY SUMMARY & MEAL LOGGING
 // ============================================
 
-export const getDailySummary = async (userId: string, date?: string): Promise<DailySummary> => {
+export const getDailySummary = async (date?: string): Promise<DailySummary> => {
   const dateParam = date || new Date().toISOString().split('T')[0];
-  const response = await apiClient.get<ApiResponse<DailySummary>>(
-    `/users/${userId}/daily-summary`,
-    { params: { date: dateParam } }
-  );
-  if (response.data.success && response.data.data) {
-    return response.data.data;
-  }
-  throw new Error(response.data.error || 'Failed to fetch daily summary');
+  const response = await apiClient.get<any>('/today');
+  
+  // Transform backend response to match our DailySummary type
+  return {
+    date: response.data.date,
+    consumed_calories: response.data.consumed.calories,
+    consumed_protein: response.data.consumed.protein_g,
+    consumed_carbs: response.data.consumed.carbs_g,
+    consumed_fat: response.data.consumed.fat_g,
+    target_calories: response.data.targets.calories,
+    target_protein: response.data.targets.protein_g,
+    target_carbs: response.data.targets.carbs_g,
+    target_fat: response.data.targets.fat_g,
+    meals_logged: [], // TODO: Add meal logs endpoint
+  };
 };
 
 export const logMeal = async (

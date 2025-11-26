@@ -12,7 +12,7 @@ import {
 import { useStore } from '../../store/useStore';
 import { MacroProgressBar } from '../../components/MacroProgressBar';
 import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
-import { useMockApi } from '../../api';
+import { getDailySummary, useMockApi } from '../../api';
 
 const TodayScreen: React.FC = () => {
   const { userProfile, dailySummary, setDailySummary, setIsLoading, isLoading } = useStore();
@@ -21,10 +21,15 @@ const TodayScreen: React.FC = () => {
   const loadDailySummary = async () => {
     try {
       setIsLoading(true);
-      // TODO: Replace with real API call
-      // const summary = await getDailySummary('user-123');
-      const summary = await useMockApi.getDailySummary();
-      setDailySummary(summary);
+      // Try real API first, fall back to mock if it fails
+      try {
+        const summary = await getDailySummary();
+        setDailySummary(summary);
+      } catch (apiError) {
+        console.warn('API call failed, using mock data:', apiError);
+        const summary = await useMockApi.getDailySummary();
+        setDailySummary(summary);
+      }
     } catch (error) {
       console.error('Failed to load daily summary:', error);
     } finally {

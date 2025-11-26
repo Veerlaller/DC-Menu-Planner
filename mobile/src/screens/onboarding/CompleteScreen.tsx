@@ -4,6 +4,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { OnboardingStackParamList } from '../../navigation/OnboardingNavigator';
 import { useStore } from '../../store/useStore';
 import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
+import { completeOnboarding } from '../../api';
 
 type CompleteScreenNavigationProp = StackNavigationProp<OnboardingStackParamList, 'Complete'>;
 
@@ -24,13 +25,17 @@ const CompleteScreen: React.FC<Props> = () => {
 
   // Calculate target macros based on user data
   const calculateMacros = () => {
-    const { height_cm, weight_kg, age, sex, goal, activity_level } = onboardingData;
+    const { height_inches, weight_lbs, age, sex, goal, activity_level } = onboardingData;
 
-    if (!height_cm || !weight_kg || !age || !sex || !goal || !activity_level) {
+    if (!height_inches || !weight_lbs || !age || !sex || !goal || !activity_level) {
       return null;
     }
 
-    // Calculate BMR using Mifflin-St Jeor equation
+    // Convert imperial to metric for BMR calculation
+    const height_cm = height_inches * 2.54;
+    const weight_kg = weight_lbs * 0.453592;
+
+    // Calculate BMR using Mifflin-St Jeor equation (uses metric)
     let bmr: number;
     if (sex === 'male') {
       bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age + 5;
@@ -60,9 +65,9 @@ const CompleteScreen: React.FC<Props> = () => {
     }
 
     // Calculate macros
-    // Protein: 2g per kg for cut/bulk, 1.6g for maintain
-    const proteinMultiplier = goal === 'maintain' ? 1.6 : 2.0;
-    const targetProtein = weight_kg * proteinMultiplier;
+    // Protein: 0.8-1g per lb for cut/bulk, 0.7g for maintain
+    const proteinMultiplier = goal === 'maintain' ? 0.7 : 0.9;
+    const targetProtein = weight_lbs * proteinMultiplier;
 
     // Fat: 25% of calories
     const targetFat = (targetCalories * 0.25) / 9;
@@ -88,8 +93,8 @@ const CompleteScreen: React.FC<Props> = () => {
       const profile = {
         id: 'user-123',
         user_id: 'user-123',
-        height_cm: onboardingData.height_cm!,
-        weight_kg: onboardingData.weight_kg!,
+        height_inches: onboardingData.height_inches!,
+        weight_lbs: onboardingData.weight_lbs!,
         age: onboardingData.age!,
         sex: onboardingData.sex!,
         goal: onboardingData.goal!,
@@ -117,12 +122,12 @@ const CompleteScreen: React.FC<Props> = () => {
         updated_at: new Date().toISOString(),
       };
 
-      // TODO: Send to backend API
-      // await completeOnboarding('user-123', onboardingData);
-
-      // Save to store
-      setUserProfile(profile);
-      setUserPreferences(preferences);
+      // Send to backend API
+      const result = await completeOnboarding(onboardingData);
+      
+      // Save to store with backend response
+      setUserProfile(result.profile);
+      setUserPreferences(result.preferences);
       setHasCompletedOnboarding(true);
       clearOnboardingData();
 

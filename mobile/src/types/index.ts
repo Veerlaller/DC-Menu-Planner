@@ -2,8 +2,8 @@
 export interface UserProfile {
   id: string;
   user_id: string;
-  height_cm: number;
-  weight_kg: number;
+  height_inches: number; // Height in inches (e.g., 70 = 5'10")
+  weight_lbs: number; // Weight in pounds
   age: number;
   sex: 'male' | 'female' | 'other';
   goal: 'cut' | 'bulk' | 'maintain';
@@ -126,8 +126,8 @@ export interface DailySummary {
 // Onboarding Types
 export interface OnboardingData {
   // Step 1: Basic Info
-  height_cm?: number;
-  weight_kg?: number;
+  height_inches?: number; // Height in inches (e.g., 70 = 5'10")
+  weight_lbs?: number; // Weight in pounds
   age?: number;
   sex?: 'male' | 'female' | 'other';
   

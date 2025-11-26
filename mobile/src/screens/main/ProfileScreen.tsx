@@ -56,8 +56,11 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Personal Info</Text>
           <View style={styles.statsGrid}>
-            <StatItem label="Height" value={`${userProfile.height_cm} cm`} />
-            <StatItem label="Weight" value={`${userProfile.weight_kg} kg`} />
+            <StatItem 
+              label="Height" 
+              value={`${Math.floor(userProfile.height_inches / 12)}'${userProfile.height_inches % 12}"`} 
+            />
+            <StatItem label="Weight" value={`${userProfile.weight_lbs} lbs`} />
             <StatItem label="Age" value={`${userProfile.age} years`} />
             <StatItem
               label="Sex"

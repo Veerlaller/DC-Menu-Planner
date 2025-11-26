@@ -1,10 +1,10 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import uuid from 'react-native-uuid';
 
-// TODO: Update this with your actual backend URL
-// For local development: http://localhost:3000
-// For production: your deployed backend URL
+// Backend API URL
 const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:3000/api' 
+  ? 'http://localhost:4000/api' 
   : 'https://your-production-api.com/api';
 
 export const apiClient = axios.create({
@@ -15,14 +15,23 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor for adding auth token
+// Generate a proper UUID for testing (in production this would come from auth)
+const getUserId = async (): Promise<string> => {
+  let userId = await AsyncStorage.getItem('tempUserId');
+  if (!userId) {
+    // Generate a proper UUID v4 format
+    userId = uuid.v4() as string;
+    await AsyncStorage.setItem('tempUserId', userId);
+  }
+  return userId;
+};
+
+// Request interceptor for adding user ID header
 apiClient.interceptors.request.use(
-  (config) => {
-    // TODO: Add auth token when authentication is implemented
-    // const token = getAuthToken();
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+  async (config) => {
+    // Add user ID header (for authentication)
+    const userId = await getUserId();
+    config.headers['x-user-id'] = userId;
     return config;
   },
   (error) => {

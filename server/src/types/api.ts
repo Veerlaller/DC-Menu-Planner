@@ -4,9 +4,9 @@
 
 // Onboarding Types
 export interface OnboardingRequest {
-  // Profile fields
-  height_cm: number;
-  weight_kg: number;
+  // Profile fields (imperial units)
+  height_inches: number;
+  weight_lbs: number;
   age: number;
   sex: 'male' | 'female' | 'other';
   goal: 'cut' | 'bulk' | 'maintain';
@@ -32,8 +32,8 @@ export interface OnboardingRequest {
 export interface UserProfile {
   id: string;
   user_id: string;
-  height_cm: number;
-  weight_kg: number;
+  height_inches: number;
+  weight_lbs: number;
   age: number;
   sex: string;
   goal: string;

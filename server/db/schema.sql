@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS dining_halls (
 CREATE TABLE IF NOT EXISTS user_profiles (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
-    height_cm NUMERIC(5,2) NOT NULL CHECK (height_cm > 0),
-    weight_kg NUMERIC(5,2) NOT NULL CHECK (weight_kg > 0),
+    height_inches NUMERIC(5,2) NOT NULL CHECK (height_inches > 0),
+    weight_lbs NUMERIC(6,2) NOT NULL CHECK (weight_lbs > 0),
     age INTEGER NOT NULL CHECK (age > 0 AND age < 150),
     sex VARCHAR(20) NOT NULL CHECK (sex IN ('male', 'female', 'other')),
     goal VARCHAR(20) NOT NULL CHECK (goal IN ('cut', 'bulk', 'maintain')),

@@ -15,10 +15,10 @@ router.post('/onboarding', requireUserId, async (req: Request, res: Response) =>
     const body = req.body as OnboardingRequest;
 
     // Validate required fields
-    if (!body.height_cm || !body.weight_kg || !body.age || !body.sex || !body.goal) {
+    if (!body.height_inches || !body.weight_lbs || !body.age || !body.sex || !body.goal) {
       return res.status(400).json({
         error: 'Missing required fields',
-        details: 'height_cm, weight_kg, age, sex, and goal are required',
+        details: 'height_inches, weight_lbs, age, sex, and goal are required',
       } as ErrorResponse);
     }
 
@@ -30,7 +30,7 @@ router.post('/onboarding', requireUserId, async (req: Request, res: Response) =>
       } as ErrorResponse);
     }
 
-    if (body.height_cm <= 0 || body.weight_kg <= 0) {
+    if (body.height_inches <= 0 || body.weight_lbs <= 0) {
       return res.status(400).json({
         error: 'Invalid measurements',
         details: 'Height and weight must be positive numbers',
@@ -58,8 +58,8 @@ router.post('/onboarding', requireUserId, async (req: Request, res: Response) =>
     // Upsert user_profiles
     const profileData = {
       user_id: userId,
-      height_cm: body.height_cm,
-      weight_kg: body.weight_kg,
+      height_inches: body.height_inches,
+      weight_lbs: body.weight_lbs,
       age: body.age,
       sex: body.sex,
       goal: body.goal,
