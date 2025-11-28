@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Modal,
+  Alert,
 } from 'react-native';
 import { useStore } from '../../store/useStore';
 import { MacroProgressBar } from '../../components/MacroProgressBar';
@@ -15,11 +17,20 @@ import { MealCard } from '../../components/MealCard';
 import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants/theme';
 import { getDailySummary, deleteMealLog, useMockApi } from '../../api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { userProfile, dailySummary, setDailySummary, setIsLoading, isLoading } = useStore();
+  const { userProfile, dailySummary, setDailySummary, setIsLoading, isLoading, setUserProfile } = useStore();
+  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const [showGoalsModal, setShowGoalsModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [goalsForm, setGoalsForm] = useState({
+    goal: userProfile?.goal || 'maintain',
+    activity_level: userProfile?.activity_level || 'moderate',
+  });
 
   const loadDailySummary = async () => {
     try {
@@ -70,6 +81,53 @@ const HomeScreen: React.FC = () => {
     } catch (error) {
       console.error('❌ Failed to delete meal:', error);
       alert('Failed to delete meal. Please try again.');
+    }
+  };
+
+  const handleUpdateGoals = () => {
+    if (userProfile) {
+      setGoalsForm({
+        goal: userProfile.goal,
+        activity_level: userProfile.activity_level,
+      });
+      setShowGoalsModal(true);
+    }
+  };
+
+  const handleSaveGoals = async () => {
+    if (!user || !userProfile) return;
+
+    try {
+      setIsUpdating(true);
+
+      // Update goals in database
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          goal: goalsForm.goal,
+          activity_level: goalsForm.activity_level,
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setUserProfile({
+        ...userProfile,
+        goal: goalsForm.goal as 'cut' | 'bulk' | 'maintain',
+        activity_level: goalsForm.activity_level as 'sedentary' | 'lightly_active' | 'moderate' | 'very_active' | 'extremely_active',
+      });
+
+      setShowGoalsModal(false);
+      Alert.alert('Success', 'Goals updated successfully! Your macro targets will be recalculated.');
+      
+      // Refresh daily summary to get updated targets
+      await loadDailySummary();
+    } catch (error: any) {
+      console.error('Failed to update goals:', error);
+      Alert.alert('Error', 'Failed to update goals. Please try again.');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -242,12 +300,237 @@ const HomeScreen: React.FC = () => {
             <Text style={styles.actionEmoji}>📊</Text>
             <Text style={styles.actionText}>View Weekly Stats</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            activeOpacity={0.8}
+            onPress={handleUpdateGoals}
+          >
             <Text style={styles.actionEmoji}>🎯</Text>
             <Text style={styles.actionText}>Update Goals</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Update Goals Modal */}
+      <Modal
+        visible={showGoalsModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowGoalsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Update Goals</Text>
+              <TouchableOpacity 
+                onPress={() => setShowGoalsModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScrollView}>
+              <View style={styles.modalBody}>
+                <Text style={styles.sectionLabel}>Fitness Goal</Text>
+                <Text style={styles.sectionHint}>Choose your primary fitness objective</Text>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.optionCard,
+                    goalsForm.goal === 'cut' && styles.optionCardSelected
+                  ]}
+                  onPress={() => setGoalsForm({ ...goalsForm, goal: 'cut' })}
+                >
+                  <View style={styles.optionHeader}>
+                    <Text style={styles.optionIcon}>📉</Text>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Cut (Lose Weight)</Text>
+                      <Text style={styles.optionDescription}>
+                        Lose fat while preserving muscle mass
+                      </Text>
+                    </View>
+                    {goalsForm.goal === 'cut' && (
+                      <Text style={styles.optionCheckmark}>✓</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[
+                    styles.optionCard,
+                    goalsForm.goal === 'bulk' && styles.optionCardSelected
+                  ]}
+                  onPress={() => setGoalsForm({ ...goalsForm, goal: 'bulk' })}
+                >
+                  <View style={styles.optionHeader}>
+                    <Text style={styles.optionIcon}>💪</Text>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Bulk (Gain Muscle)</Text>
+                      <Text style={styles.optionDescription}>
+                        Build muscle and gain strength
+                      </Text>
+                    </View>
+                    {goalsForm.goal === 'bulk' && (
+                      <Text style={styles.optionCheckmark}>✓</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[
+                    styles.optionCard,
+                    goalsForm.goal === 'maintain' && styles.optionCardSelected
+                  ]}
+                  onPress={() => setGoalsForm({ ...goalsForm, goal: 'maintain' })}
+                >
+                  <View style={styles.optionHeader}>
+                    <Text style={styles.optionIcon}>⚖️</Text>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Maintain</Text>
+                      <Text style={styles.optionDescription}>
+                        Maintain current physique and performance
+                      </Text>
+                    </View>
+                    {goalsForm.goal === 'maintain' && (
+                      <Text style={styles.optionCheckmark}>✓</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <Text style={[styles.sectionLabel, { marginTop: spacing.lg }]}>Activity Level</Text>
+                <Text style={styles.sectionHint}>How active are you during the week?</Text>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.optionCard,
+                    goalsForm.activity_level === 'sedentary' && styles.optionCardSelected
+                  ]}
+                  onPress={() => setGoalsForm({ ...goalsForm, activity_level: 'sedentary' })}
+                >
+                  <View style={styles.optionHeader}>
+                    <Text style={styles.optionIcon}>🛋️</Text>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Sedentary</Text>
+                      <Text style={styles.optionDescription}>
+                        Little to no exercise
+                      </Text>
+                    </View>
+                    {goalsForm.activity_level === 'sedentary' && (
+                      <Text style={styles.optionCheckmark}>✓</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[
+                    styles.optionCard,
+                    goalsForm.activity_level === 'lightly_active' && styles.optionCardSelected
+                  ]}
+                  onPress={() => setGoalsForm({ ...goalsForm, activity_level: 'lightly_active' })}
+                >
+                  <View style={styles.optionHeader}>
+                    <Text style={styles.optionIcon}>🚶</Text>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Lightly Active</Text>
+                      <Text style={styles.optionDescription}>
+                        Light exercise 1-3 days/week
+                      </Text>
+                    </View>
+                    {goalsForm.activity_level === 'lightly_active' && (
+                      <Text style={styles.optionCheckmark}>✓</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[
+                    styles.optionCard,
+                    goalsForm.activity_level === 'moderate' && styles.optionCardSelected
+                  ]}
+                  onPress={() => setGoalsForm({ ...goalsForm, activity_level: 'moderate' })}
+                >
+                  <View style={styles.optionHeader}>
+                    <Text style={styles.optionIcon}>🏃</Text>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Moderately Active</Text>
+                      <Text style={styles.optionDescription}>
+                        Moderate exercise 3-5 days/week
+                      </Text>
+                    </View>
+                    {goalsForm.activity_level === 'moderate' && (
+                      <Text style={styles.optionCheckmark}>✓</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[
+                    styles.optionCard,
+                    goalsForm.activity_level === 'very_active' && styles.optionCardSelected
+                  ]}
+                  onPress={() => setGoalsForm({ ...goalsForm, activity_level: 'very_active' })}
+                >
+                  <View style={styles.optionHeader}>
+                    <Text style={styles.optionIcon}>🏋️</Text>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Very Active</Text>
+                      <Text style={styles.optionDescription}>
+                        Hard exercise 6-7 days/week
+                      </Text>
+                    </View>
+                    {goalsForm.activity_level === 'very_active' && (
+                      <Text style={styles.optionCheckmark}>✓</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[
+                    styles.optionCard,
+                    goalsForm.activity_level === 'extremely_active' && styles.optionCardSelected
+                  ]}
+                  onPress={() => setGoalsForm({ ...goalsForm, activity_level: 'extremely_active' })}
+                >
+                  <View style={styles.optionHeader}>
+                    <Text style={styles.optionIcon}>🏆</Text>
+                    <View style={styles.optionTextContainer}>
+                      <Text style={styles.optionTitle}>Extremely Active</Text>
+                      <Text style={styles.optionDescription}>
+                        Very hard exercise & physical job
+                      </Text>
+                    </View>
+                    {goalsForm.activity_level === 'extremely_active' && (
+                      <Text style={styles.optionCheckmark}>✓</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => setShowGoalsModal(false)}
+                disabled={isUpdating}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleSaveGoals}
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.modalButtonPrimaryText}>Save Changes</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -454,6 +737,135 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.xl,
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '85%',
+    ...shadow.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseText: {
+    fontSize: 18,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  modalScrollView: {
+    maxHeight: 500,
+  },
+  modalBody: {
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  sectionLabel: {
+    fontSize: fontSize.base,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: spacing.sm,
+  },
+  sectionHint: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+  },
+  optionCard: {
+    backgroundColor: colors.gray50,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 2,
+    borderColor: colors.gray200,
+  },
+  optionCardSelected: {
+    backgroundColor: colors.primary + '10',
+    borderColor: colors.primary,
+  },
+  optionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  optionIcon: {
+    fontSize: 32,
+  },
+  optionTextContainer: {
+    flex: 1,
+    gap: spacing.xs / 2,
+  },
+  optionTitle: {
+    fontSize: fontSize.base,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  optionDescription: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  optionCheckmark: {
+    fontSize: 24,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonSecondary: {
+    backgroundColor: colors.gray100,
+    borderWidth: 1.5,
+    borderColor: colors.gray300,
+  },
+  modalButtonSecondaryText: {
+    fontSize: fontSize.base,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  modalButtonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  modalButtonPrimaryText: {
+    fontSize: fontSize.base,
+    fontWeight: '700',
+    color: colors.white,
   },
 });
 
