@@ -38,6 +38,13 @@ const PreferencesScreen: React.FC<Props> = ({ navigation }) => {
     onboardingData.allergies?.join(', ') || ''
   );
 
+  // Determine if options should be disabled based on conflicts
+  const isNoMeatDiet = isVegetarian || isVegan || isPescatarian;
+  const hinduNonVegDisabled = isNoMeatDiet;
+  const vegetarianDisabled = isHinduNonVeg;
+  const veganDisabled = isHinduNonVeg;
+  const pescatarianDisabled = isHinduNonVeg;
+
   const handleComplete = () => {
     const allergies = allergiesInput
       .split(',')
@@ -80,16 +87,19 @@ const PreferencesScreen: React.FC<Props> = ({ navigation }) => {
                   label="Vegetarian"
                   value={isVegetarian}
                   onToggle={setIsVegetarian}
+                  disabled={vegetarianDisabled}
                 />
                 <ToggleOption
                   label="Vegan"
                   value={isVegan}
                   onToggle={setIsVegan}
+                  disabled={veganDisabled}
                 />
                 <ToggleOption
                   label="Pescatarian"
                   value={isPescatarian}
                   onToggle={setIsPescatarian}
+                  disabled={pescatarianDisabled}
                 />
                 <ToggleOption
                   label="Gluten-Free"
@@ -118,11 +128,22 @@ const PreferencesScreen: React.FC<Props> = ({ navigation }) => {
                   onToggle={setIsKosher}
                 />
                 <ToggleOption
-                  label="Hindu (No Beef)"
+                  label="Hindu Non-Veg (No Beef/Pork)"
                   value={isHinduNonVeg}
                   onToggle={setIsHinduNonVeg}
+                  disabled={hinduNonVegDisabled}
                 />
               </View>
+              {hinduNonVegDisabled && (
+                <Text style={styles.disabledHint}>
+                  Hindu Non-Veg is not compatible with vegetarian/vegan/pescatarian diets
+                </Text>
+              )}
+              {(vegetarianDisabled || veganDisabled || pescatarianDisabled) && (
+                <Text style={styles.disabledHint}>
+                  Vegetarian/vegan/pescatarian options are not compatible with Hindu Non-Veg
+                </Text>
+              )}
             </View>
 
             <View style={styles.section}>
@@ -159,14 +180,18 @@ const ToggleOption: React.FC<{
   label: string;
   value: boolean;
   onToggle: (value: boolean) => void;
-}> = ({ label, value, onToggle }) => (
+  disabled?: boolean;
+}> = ({ label, value, onToggle, disabled = false }) => (
   <TouchableOpacity
-    style={styles.toggleItem}
-    onPress={() => onToggle(!value)}
-    activeOpacity={0.7}
+    style={[styles.toggleItem, disabled && styles.toggleItemDisabled]}
+    onPress={() => !disabled && onToggle(!value)}
+    activeOpacity={disabled ? 1 : 0.7}
+    disabled={disabled}
   >
-    <Text style={styles.toggleLabel}>{label}</Text>
-    <View style={[styles.toggle, value && styles.toggleActive]}>
+    <Text style={[styles.toggleLabel, disabled && styles.toggleLabelDisabled]}>
+      {label}
+    </Text>
+    <View style={[styles.toggle, value && styles.toggleActive, disabled && styles.toggleDisabled]}>
       <View style={[styles.toggleThumb, value && styles.toggleThumbActive]} />
     </View>
   </TouchableOpacity>
@@ -234,10 +259,17 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
   },
+  toggleItemDisabled: {
+    backgroundColor: colors.gray100,
+    opacity: 0.5,
+  },
   toggleLabel: {
     fontSize: fontSize.base,
     fontWeight: '500',
     color: colors.text,
+  },
+  toggleLabelDisabled: {
+    color: colors.gray400,
   },
   toggle: {
     width: 50,
@@ -249,6 +281,9 @@ const styles = StyleSheet.create({
   toggleActive: {
     backgroundColor: colors.primary,
   },
+  toggleDisabled: {
+    backgroundColor: colors.gray200,
+  },
   toggleThumb: {
     width: 24,
     height: 24,
@@ -257,6 +292,12 @@ const styles = StyleSheet.create({
   },
   toggleThumbActive: {
     transform: [{ translateX: 22 }],
+  },
+  disabledHint: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    marginTop: spacing.xs,
   },
   textArea: {
     backgroundColor: colors.gray50,

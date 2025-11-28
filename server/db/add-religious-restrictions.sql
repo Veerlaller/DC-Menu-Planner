@@ -18,7 +18,7 @@ ADD COLUMN IF NOT EXISTS is_kosher BOOLEAN DEFAULT FALSE NOT NULL,
 ADD COLUMN IF NOT EXISTS is_hindu_non_veg BOOLEAN DEFAULT FALSE NOT NULL;
 
 -- Add comments for documentation
-COMMENT ON COLUMN user_preferences.is_halal IS 'User follows halal dietary laws';
+COMMENT ON COLUMN user_preferences.is_halal IS 'User follows halal dietary laws (no pork, no alcohol)';
 COMMENT ON COLUMN user_preferences.is_kosher IS 'User follows kosher dietary laws';
-COMMENT ON COLUMN user_preferences.is_hindu_non_veg IS 'User follows Hindu dietary restrictions (no beef)';
+COMMENT ON COLUMN user_preferences.is_hindu_non_veg IS 'User follows Hindu dietary restrictions (no beef, no pork)';
 
