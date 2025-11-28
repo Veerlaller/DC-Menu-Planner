@@ -45,43 +45,27 @@ export const MainNavigator: React.FC = () => {
         tabBarInactiveTintColor: colors.gray500,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabBarLabel,
-        headerShown: true,
-        headerStyle: {
-          backgroundColor: colors.white,
-          elevation: 0,
-          shadowOpacity: 0,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-        },
-        headerTitleStyle: {
-          fontSize: fontSize.xl,
-          fontWeight: '600',
-          color: colors.text,
-        },
+        headerShown: false,
       })}
     >
       <Tab.Screen 
         name="Today" 
         component={TodayScreen}
-        options={{ title: 'Today' }}
       />
       <Tab.Screen 
         name="Menus" 
         component={MenusScreen}
-        options={{ title: 'Menus' }}
       />
       <Tab.Screen 
         name="HungryNow" 
         component={HungryNowScreen}
         options={{ 
-          title: "I'm Hungry",
           tabBarLabel: "Hungry Now"
         }}
       />
       <Tab.Screen 
         name="Profile" 
         component={ProfileScreen}
-        options={{ title: 'Profile' }}
       />
     </Tab.Navigator>
   );
