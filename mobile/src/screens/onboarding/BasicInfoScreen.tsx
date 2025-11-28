@@ -24,28 +24,42 @@ interface Props {
 const BasicInfoScreen: React.FC<Props> = ({ navigation }) => {
   const { onboardingData, setOnboardingData } = useStore();
   
-  const [height, setHeight] = useState(onboardingData.height_inches?.toString() || '');
+  // Convert stored inches to feet and inches for display
+  const storedFeet = onboardingData.height_inches ? Math.floor(onboardingData.height_inches / 12) : undefined;
+  const storedInches = onboardingData.height_inches ? onboardingData.height_inches % 12 : undefined;
+  
+  const [feet, setFeet] = useState(storedFeet?.toString() || '');
+  const [inches, setInches] = useState(storedInches?.toString() || '');
   const [weight, setWeight] = useState(onboardingData.weight_lbs?.toString() || '');
   const [age, setAge] = useState(onboardingData.age?.toString() || '');
   const [sex, setSex] = useState<'male' | 'female' | 'other' | undefined>(onboardingData.sex);
 
   const handleNext = () => {
-    const heightNum = parseFloat(height);
+    const feetNum = parseInt(feet);
+    const inchesNum = parseInt(inches);
     const weightNum = parseFloat(weight);
     const ageNum = parseInt(age);
 
-    if (!height || !weight || !age || !sex) {
+    if (!feet || !inches || !weight || !age || !sex) {
       alert('Please fill in all fields');
       return;
     }
 
-    if (isNaN(heightNum) || isNaN(weightNum) || isNaN(ageNum)) {
+    if (isNaN(feetNum) || isNaN(inchesNum) || isNaN(weightNum) || isNaN(ageNum)) {
       alert('Please enter valid numbers');
       return;
     }
 
+    if (inchesNum < 0 || inchesNum >= 12) {
+      alert('Inches must be between 0 and 11');
+      return;
+    }
+
+    // Convert feet and inches to total inches
+    const totalInches = (feetNum * 12) + inchesNum;
+
     setOnboardingData({
-      height_inches: heightNum,
+      height_inches: totalInches,
       weight_lbs: weightNum,
       age: ageNum,
       sex,
@@ -72,16 +86,31 @@ const BasicInfoScreen: React.FC<Props> = ({ navigation }) => {
 
             <View style={styles.form}>
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Height (inches)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={height}
-                  onChangeText={setHeight}
-                  placeholder="70"
-                  keyboardType="numeric"
-                  placeholderTextColor={colors.gray400}
-                />
-                <Text style={styles.hint}>Example: 5'10" = 70 inches</Text>
+                <Text style={styles.label}>Height</Text>
+                <View style={styles.heightRow}>
+                  <View style={styles.heightInput}>
+                    <TextInput
+                      style={styles.input}
+                      value={feet}
+                      onChangeText={setFeet}
+                      placeholder="5"
+                      keyboardType="numeric"
+                      placeholderTextColor={colors.gray400}
+                    />
+                    <Text style={styles.unitLabel}>feet</Text>
+                  </View>
+                  <View style={styles.heightInput}>
+                    <TextInput
+                      style={styles.input}
+                      value={inches}
+                      onChangeText={setInches}
+                      placeholder="10"
+                      keyboardType="numeric"
+                      placeholderTextColor={colors.gray400}
+                    />
+                    <Text style={styles.unitLabel}>inches</Text>
+                  </View>
+                </View>
               </View>
 
               <View style={styles.inputGroup}>
@@ -202,10 +231,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  hint: {
+  heightRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  heightInput: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  unitLabel: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
-    fontStyle: 'italic',
+    textAlign: 'center',
   },
   input: {
     backgroundColor: colors.gray50,
