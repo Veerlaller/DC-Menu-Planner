@@ -150,6 +150,12 @@ export interface OnboardingData {
   allergies?: string[];
   dislikes?: string[];
   preferences?: string[];
+  
+  // Calculated Targets (added before sending to backend)
+  target_calories?: number;
+  target_protein_g?: number;
+  target_carbs_g?: number;
+  target_fat_g?: number;
 }
 
 // API Response Types

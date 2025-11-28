@@ -76,8 +76,12 @@ export const completeOnboarding = async (
   throw new Error(response.data.error || 'Failed to complete onboarding');
 };
 
-// Check if user has completed onboarding
-export const checkUserProfile = async (): Promise<boolean> => {
+// Check if user has completed onboarding and load their profile
+export const checkUserProfile = async (): Promise<{
+  hasProfile: boolean;
+  profile?: UserProfile;
+  preferences?: UserPreferences;
+}> => {
   console.log('📡 API: Calling GET /api/onboarding...');
   
   try {
@@ -93,7 +97,22 @@ export const checkUserProfile = async (): Promise<boolean> => {
     const hasCompleted = !!(response.data.profile && response.data.preferences);
     console.log('📡 API: User has completed onboarding:', hasCompleted);
     
-    return hasCompleted;
+    if (hasCompleted) {
+      console.log('📡 API: Profile data:', {
+        target_calories: response.data.profile.target_calories,
+        target_protein_g: response.data.profile.target_protein_g,
+        target_carbs_g: response.data.profile.target_carbs_g,
+        target_fat_g: response.data.profile.target_fat_g,
+      });
+      
+      return {
+        hasProfile: true,
+        profile: response.data.profile,
+        preferences: response.data.preferences,
+      };
+    }
+    
+    return { hasProfile: false };
   } catch (error: any) {
     console.log('📡 API: Error response:', {
       status: error.response?.status,
@@ -103,12 +122,12 @@ export const checkUserProfile = async (): Promise<boolean> => {
     // 404 means user hasn't completed onboarding
     if (error.response?.status === 404) {
       console.log('📡 API: 404 - User has not completed onboarding');
-      return false;
+      return { hasProfile: false };
     }
     
     // For other errors, assume not completed to be safe
     console.error('📡 API: Unexpected error checking profile:', error.message);
-    return false;
+    return { hasProfile: false };
   }
 };
 

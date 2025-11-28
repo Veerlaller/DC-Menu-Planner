@@ -22,7 +22,7 @@ export type RootStackParamList = {
 const Stack = createStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
-  const { hasCompletedOnboarding, loadPersistedData, setHasCompletedOnboarding } = useStore();
+  const { hasCompletedOnboarding, loadPersistedData, setHasCompletedOnboarding, setUserProfile, setUserPreferences } = useStore();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [isCheckingProfile, setIsCheckingProfile] = useState(false);
   const hasCheckedProfile = useRef(false);
@@ -71,13 +71,22 @@ export const RootNavigator: React.FC = () => {
         console.log('   User Email:', user.email);
         
         try {
-          const hasProfile = await checkUserProfile();
+          const result = await checkUserProfile();
           
-          console.log('📊 Profile check result:', hasProfile);
+          console.log('📊 Profile check result:', result.hasProfile);
           
-          if (hasProfile) {
-            console.log('✅ User has completed onboarding - going to Main App');
+          if (result.hasProfile && result.profile && result.preferences) {
+            console.log('✅ User has completed onboarding - loading profile data');
+            console.log('   Profile data:', {
+              target_calories: result.profile.target_calories,
+              target_protein_g: result.profile.target_protein_g,
+            });
+            
+            // Load profile and preferences into store
+            setUserProfile(result.profile);
+            setUserPreferences(result.preferences);
             setHasCompletedOnboarding(true);
+            console.log('✅ Profile data loaded into store - going to Main App');
           } else {
             console.log('📝 User needs to complete onboarding - showing Onboarding Flow');
             setHasCompletedOnboarding(false);

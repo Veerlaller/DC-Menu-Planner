@@ -89,44 +89,38 @@ const CompleteScreen: React.FC<Props> = () => {
     try {
       const macros = calculateMacros();
 
-      // Create mock user profile
-      const profile = {
-        id: 'user-123',
-        user_id: 'user-123',
-        height_inches: onboardingData.height_inches!,
-        weight_lbs: onboardingData.weight_lbs!,
-        age: onboardingData.age!,
-        sex: onboardingData.sex!,
-        goal: onboardingData.goal!,
-        activity_level: onboardingData.activity_level!,
-        target_calories: macros?.targetCalories,
-        target_protein_g: macros?.targetProtein,
-        target_carbs_g: macros?.targetCarbs,
-        target_fat_g: macros?.targetFat,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+      if (!macros) {
+        alert('Failed to calculate nutrition targets. Please check your information.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Add calculated macros to onboarding data
+      const completeData = {
+        ...onboardingData,
+        target_calories: macros.targetCalories,
+        target_protein_g: macros.targetProtein,
+        target_carbs_g: macros.targetCarbs,
+        target_fat_g: macros.targetFat,
       };
 
-      const preferences = {
-        id: 'pref-123',
-        user_id: 'user-123',
-        is_vegetarian: onboardingData.is_vegetarian || false,
-        is_vegan: onboardingData.is_vegan || false,
-        is_pescatarian: onboardingData.is_pescatarian || false,
-        is_gluten_free: onboardingData.is_gluten_free || false,
-        is_dairy_free: onboardingData.is_dairy_free || false,
-        is_halal: onboardingData.is_halal || false,
-        is_kosher: onboardingData.is_kosher || false,
-        is_hindu_non_veg: onboardingData.is_hindu_non_veg || false,
-        allergies: onboardingData.allergies || [],
-        dislikes: onboardingData.dislikes || [],
-        preferences: onboardingData.preferences || [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      console.log('📤 Sending onboarding data with macros:', {
+        ...completeData,
+        target_calories: completeData.target_calories,
+        target_protein_g: completeData.target_protein_g,
+        target_carbs_g: completeData.target_carbs_g,
+        target_fat_g: completeData.target_fat_g,
+      });
 
       // Send to backend API
-      const result = await completeOnboarding(onboardingData);
+      const result = await completeOnboarding(completeData);
+      
+      console.log('📥 Received profile from backend:', {
+        target_calories: result.profile.target_calories,
+        target_protein_g: result.profile.target_protein_g,
+        target_carbs_g: result.profile.target_carbs_g,
+        target_fat_g: result.profile.target_fat_g,
+      });
       
       // Save to store with backend response
       setUserProfile(result.profile);

@@ -136,12 +136,18 @@ const ProfileScreen: React.FC = () => {
               {userPreferences.is_pescatarian && <PreferencePill text="🐟 Pescatarian" />}
               {userPreferences.is_gluten_free && <PreferencePill text="🌾 Gluten-Free" />}
               {userPreferences.is_dairy_free && <PreferencePill text="🥛 Dairy-Free" />}
+              {userPreferences.is_halal && <PreferencePill text="☪️ Halal" />}
+              {userPreferences.is_kosher && <PreferencePill text="✡️ Kosher" />}
+              {userPreferences.is_hindu_non_veg && <PreferencePill text="🕉️ Hindu Non-Veg" />}
               
               {!userPreferences.is_vegetarian &&
                 !userPreferences.is_vegan &&
                 !userPreferences.is_pescatarian &&
                 !userPreferences.is_gluten_free &&
-                !userPreferences.is_dairy_free && (
+                !userPreferences.is_dairy_free &&
+                !userPreferences.is_halal &&
+                !userPreferences.is_kosher &&
+                !userPreferences.is_hindu_non_veg && (
                   <Text style={styles.noPreferences}>No restrictions</Text>
                 )}
             </View>
