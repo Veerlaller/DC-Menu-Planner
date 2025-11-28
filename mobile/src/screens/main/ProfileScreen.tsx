@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,25 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { useStore } from '../../store/useStore';
 import { useAuth } from '../../hooks/useAuth';
 import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants/theme';
+import { supabase } from '../../lib/supabase';
 
 const ProfileScreen: React.FC = () => {
-  const { userProfile, userPreferences, reset } = useStore();
+  const { userProfile, userPreferences, reset, setUserProfile } = useStore();
   const { user, signOut } = useAuth();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editForm, setEditForm] = useState({
+    weight_lbs: userProfile?.weight_lbs.toString() || '',
+    height_inches: userProfile?.height_inches.toString() || '',
+    age: userProfile?.age.toString() || '',
+  });
 
   const handleSignOut = () => {
     Alert.alert(
@@ -32,6 +43,62 @@ const ProfileScreen: React.FC = () => {
         },
       ]
     );
+  };
+
+  const handleEditProfile = () => {
+    if (userProfile) {
+      setEditForm({
+        weight_lbs: userProfile.weight_lbs.toString(),
+        height_inches: userProfile.height_inches.toString(),
+        age: userProfile.age.toString(),
+      });
+      setShowEditModal(true);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user || !userProfile) return;
+
+    try {
+      setIsUpdating(true);
+
+      const weight = parseFloat(editForm.weight_lbs);
+      const height = parseFloat(editForm.height_inches);
+      const age = parseInt(editForm.age);
+
+      if (isNaN(weight) || isNaN(height) || isNaN(age)) {
+        Alert.alert('Error', 'Please enter valid numbers for all fields');
+        return;
+      }
+
+      // Update profile in database
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          weight_lbs: weight,
+          height_inches: height,
+          age: age,
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setUserProfile({
+        ...userProfile,
+        weight_lbs: weight,
+        height_inches: height,
+        age: age,
+      });
+
+      setShowEditModal(false);
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   if (!userProfile) {
@@ -231,7 +298,11 @@ const ProfileScreen: React.FC = () => {
         {/* Actions */}
         <View style={styles.actionsSection}>
           <Text style={styles.actionsSectionTitle}>Settings</Text>
-          <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            activeOpacity={0.8}
+            onPress={handleEditProfile}
+          >
             <View style={styles.actionButtonContent}>
               <Text style={styles.actionButtonIcon}>✏️</Text>
               <View style={styles.actionButtonTextContainer}>
@@ -277,6 +348,89 @@ const ProfileScreen: React.FC = () => {
           <Text style={styles.footerText}>Made for UC Davis Students</Text>
         </View>
       </ScrollView>
+
+      {/* Edit Profile Modal */}
+      <Modal
+        visible={showEditModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <TouchableOpacity 
+                onPress={() => setShowEditModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Weight (lbs)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editForm.weight_lbs}
+                  onChangeText={(text) => setEditForm({ ...editForm, weight_lbs: text })}
+                  keyboardType="numeric"
+                  placeholder="Enter weight"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Height (inches)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editForm.height_inches}
+                  onChangeText={(text) => setEditForm({ ...editForm, height_inches: text })}
+                  keyboardType="numeric"
+                  placeholder="Enter height in inches"
+                />
+                <Text style={styles.inputHint}>
+                  {editForm.height_inches ? 
+                    `${Math.floor(parseFloat(editForm.height_inches) / 12)}'${parseFloat(editForm.height_inches) % 12}"` 
+                    : ''}
+                </Text>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Age</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editForm.age}
+                  onChangeText={(text) => setEditForm({ ...editForm, age: text })}
+                  keyboardType="numeric"
+                  placeholder="Enter age"
+                />
+              </View>
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => setShowEditModal(false)}
+                disabled={isUpdating}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleSaveProfile}
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.modalButtonPrimaryText}>Save Changes</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -623,6 +777,104 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.xxl,
+    width: '100%',
+    maxWidth: 500,
+    ...shadow.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.xl,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: fontSize['2xl'],
+    fontWeight: '700',
+    color: colors.text,
+  },
+  modalCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseText: {
+    fontSize: 20,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  modalBody: {
+    padding: spacing.xl,
+    gap: spacing.lg,
+  },
+  inputGroup: {
+    gap: spacing.sm,
+  },
+  inputLabel: {
+    fontSize: fontSize.base,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  input: {
+    backgroundColor: colors.gray100,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    fontSize: fontSize.lg,
+    color: colors.text,
+    borderWidth: 2,
+    borderColor: colors.gray200,
+  },
+  inputHint: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonSecondary: {
+    backgroundColor: colors.gray100,
+    borderWidth: 2,
+    borderColor: colors.gray300,
+  },
+  modalButtonSecondaryText: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  modalButtonPrimary: {
+    backgroundColor: colors.primary,
+  },
+  modalButtonPrimaryText: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.white,
   },
 });
 
