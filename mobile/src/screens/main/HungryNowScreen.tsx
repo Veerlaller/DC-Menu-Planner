@@ -11,68 +11,85 @@ import {
 import { useStore } from '../../store/useStore';
 import { MenuItemWithNutrition } from '../../types';
 import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
+import { getAvailableMenus } from '../../api';
+import { useAuth } from '../../hooks/useAuth';
 
 const HungryNowScreen: React.FC = () => {
   const { userProfile, userPreferences } = useStore();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<MenuItemWithNutrition[]>([]);
   const [recommendedHall, setRecommendedHall] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const getRecommendations = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      // TODO: Replace with real API call
-      // const recs = await getHungryNowRecommendations('user-123');
+      console.log('🔍 Fetching available menus...');
       
-      // Mock recommendations
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setRecommendedHall('Segundo Dining Commons');
-      setRecommendations([
-        {
-          id: '1',
-          menu_day_id: 'menu-1',
-          name: 'Grilled Chicken Breast',
-          category: 'entree',
-          station: 'Grill',
-          is_vegetarian: false,
-          is_vegan: false,
-          contains_gluten: false,
-          contains_dairy: false,
-          contains_nuts: false,
-          allergen_info: [],
-          nutrition: {
-            id: 'n1',
-            menu_item_id: '1',
-            calories: 165,
-            protein_g: 31,
-            carbs_g: 0,
-            fat_g: 3.6,
-          },
-        },
-        {
-          id: '2',
-          menu_day_id: 'menu-1',
-          name: 'Brown Rice',
-          category: 'side',
-          station: 'Grain Bar',
-          is_vegetarian: true,
-          is_vegan: true,
-          contains_gluten: false,
-          contains_dairy: false,
-          contains_nuts: false,
-          allergen_info: [],
-          nutrition: {
-            id: 'n2',
-            menu_item_id: '2',
-            calories: 215,
-            protein_g: 5,
-            carbs_g: 45,
-            fat_g: 1.8,
-          },
-        },
-      ]);
-    } catch (error) {
+      // Get today's menu items from the API
+      const menuItems = await getAvailableMenus();
+      
+      console.log('📋 Received menu items:', menuItems.length);
+      
+      if (!menuItems || menuItems.length === 0) {
+        setError('No menu items available today. The dining hall menus may not be loaded yet.');
+        setRecommendations([]);
+        setRecommendedHall(null);
+        return;
+      }
+      
+      // Filter based on user preferences
+      let filteredItems = menuItems;
+      
+      if (userPreferences) {
+        filteredItems = menuItems.filter((item) => {
+          // Check vegetarian/vegan restrictions
+          if (userPreferences.is_vegan && !item.is_vegan) return false;
+          if (userPreferences.is_vegetarian && !item.is_vegetarian) return false;
+          if (userPreferences.is_pescatarian && !item.is_vegetarian && item.category !== 'seafood') return false;
+          
+          // Check allergens
+          if (userPreferences.is_gluten_free && item.contains_gluten) return false;
+          if (userPreferences.is_dairy_free && item.contains_dairy) return false;
+          if (userPreferences.is_dairy_free && item.contains_nuts) return false;
+          
+          // Check specific allergies
+          if (userPreferences.allergies && userPreferences.allergies.length > 0) {
+            const itemAllergens = item.allergen_info.map((a) => a.toLowerCase());
+            const hasAllergen = userPreferences.allergies.some((allergy) =>
+              itemAllergens.some((a) => a.includes(allergy.toLowerCase()))
+            );
+            if (hasAllergen) return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      if (filteredItems.length === 0) {
+        setError('No menu items match your dietary restrictions. Try adjusting your preferences.');
+        setRecommendations([]);
+        setRecommendedHall(null);
+        return;
+      }
+      
+      // Sort by protein content for simplicity (could be more sophisticated)
+      const sortedItems = filteredItems.sort(
+        (a, b) => (b.nutrition?.protein_g || 0) - (a.nutrition?.protein_g || 0)
+      );
+      
+      // Take top 3 items
+      const topRecommendations = sortedItems.slice(0, 3);
+      
+      setRecommendedHall('UC Davis Dining Commons');
+      setRecommendations(topRecommendations);
+    } catch (error: any) {
       console.error('Failed to get recommendations:', error);
+      setError(error.message || 'Failed to load menu recommendations. Please try again.');
+      setRecommendations([]);
+      setRecommendedHall(null);
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +115,27 @@ const HungryNowScreen: React.FC = () => {
           </Text>
         </View>
 
-        {!recommendedHall ? (
+        {error && (
+          <View style={styles.errorCard}>
+            <Text style={styles.errorEmoji}>⚠️</Text>
+            <Text style={styles.errorTitle}>No Menu Available</Text>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={getRecommendations}
+              activeOpacity={0.8}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!recommendedHall && !error ? (
           <View style={styles.promptCard}>
             <Text style={styles.promptTitle}>Ready to eat?</Text>
             <Text style={styles.promptText}>
@@ -117,7 +154,7 @@ const HungryNowScreen: React.FC = () => {
               )}
             </TouchableOpacity>
           </View>
-        ) : (
+        ) : recommendedHall ? (
           <>
             {/* Recommended Hall */}
             <View style={styles.recommendationCard}>
@@ -173,11 +210,16 @@ const HungryNowScreen: React.FC = () => {
               style={styles.secondaryButton}
               onPress={getRecommendations}
               activeOpacity={0.8}
+              disabled={isLoading}
             >
-              <Text style={styles.secondaryButtonText}>Get New Recommendation</Text>
+              {isLoading ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Text style={styles.secondaryButtonText}>Get New Recommendation</Text>
+              )}
             </TouchableOpacity>
           </>
-        )}
+        ) : null}
 
         {/* Info Card */}
         <View style={styles.infoCard}>
@@ -459,6 +501,45 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+  },
+  errorCard: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xxl,
+    alignItems: 'center',
+    gap: spacing.md,
+    borderWidth: 2,
+    borderColor: colors.warning,
+  },
+  errorEmoji: {
+    fontSize: 64,
+  },
+  errorTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  errorText: {
+    fontSize: fontSize.base,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  retryButton: {
+    backgroundColor: colors.white,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    marginTop: spacing.sm,
+    minWidth: 150,
+  },
+  retryButtonText: {
+    fontSize: fontSize.base,
+    fontWeight: '600',
+    color: colors.primary,
+    textAlign: 'center',
   },
 });
 
