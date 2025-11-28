@@ -69,6 +69,8 @@ export interface MenuItem {
   contains_dairy: boolean;
   contains_nuts: boolean;
   allergen_info: string[];
+  meal_type?: MealType;
+  date?: string;
 }
 
 export interface NutritionFacts {
@@ -93,8 +95,8 @@ export interface NutritionFacts {
 }
 
 export interface MenuItemWithNutrition extends MenuItem {
-  nutrition?: NutritionFacts;
-  dining_hall?: DiningHall;
+  nutrition?: NutritionFacts | null;
+  dining_hall?: DiningHall | null;
 }
 
 // Meal Log Types

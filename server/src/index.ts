@@ -5,6 +5,7 @@ import healthRoutes from './routes/health.js';
 import debugRoutes from './routes/debug.js';
 import onboardingRoutes from './routes/onboarding.js';
 import todayRoutes from './routes/today.js';
+import menusRoutes from './routes/menus.js';
 
 // Load environment variables
 dotenv.config();
@@ -29,6 +30,7 @@ app.use('/', healthRoutes);
 app.use('/', debugRoutes);
 app.use('/api', onboardingRoutes);
 app.use('/api', todayRoutes);
+app.use('/api', menusRoutes);
 
 /**
  * 404 handler for undefined routes

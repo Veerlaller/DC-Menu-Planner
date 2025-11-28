@@ -182,11 +182,49 @@ export const deleteMealLog = async (userId: string, mealLogId: string): Promise<
 // ============================================
 
 export const getAvailableMenus = async (date?: string): Promise<MenuItemWithNutrition[]> => {
-  const dateParam = date || new Date().toISOString().split('T')[0];
+  // If no date provided, try today first, then find most recent available date
+  if (!date) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Try today
+    const todayResponse = await apiClient.get<ApiResponse<MenuItemWithNutrition[]>>(
+      '/menus/available',
+      { params: { date: today } }
+    );
+    
+    // If today has menus, return them
+    if (todayResponse.data.success && todayResponse.data.data && todayResponse.data.data.length > 0) {
+      return todayResponse.data.data;
+    }
+    
+    // Otherwise, try the next 7 days to find available menus
+    for (let i = 1; i <= 7; i++) {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + i);
+      const dateStr = futureDate.toISOString().split('T')[0];
+      
+      const response = await apiClient.get<ApiResponse<MenuItemWithNutrition[]>>(
+        '/menus/available',
+        { params: { date: dateStr } }
+      );
+      
+      if (response.data.success && response.data.data && response.data.data.length > 0) {
+        console.log(`📅 No menu for today, showing menu for ${dateStr}`);
+        return response.data.data;
+      }
+    }
+    
+    // If still no data found, return empty array
+    console.log('⚠️ No menus found for the next 7 days');
+    return [];
+  }
+  
+  // If date is provided, use it directly
   const response = await apiClient.get<ApiResponse<MenuItemWithNutrition[]>>(
     '/menus/available',
-    { params: { date: dateParam } }
+    { params: { date } }
   );
+  
   if (response.data.success && response.data.data) {
     return response.data.data;
   }

@@ -11,7 +11,7 @@ import {
 import { useStore } from '../../store/useStore';
 import { MenuItemWithNutrition } from '../../types';
 import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
-import { useMockApi } from '../../api';
+import { getAvailableMenus } from '../../api';
 
 const DINING_HALLS = ['Latitude', 'Cuarto', 'Segundo', 'Tercero'];
 const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner'];
@@ -20,14 +20,18 @@ const MenusScreen: React.FC = () => {
   const { availableMenus, setAvailableMenus, setIsLoading, isLoading } = useStore();
   const [selectedHall, setSelectedHall] = useState('Latitude');
   const [selectedMeal, setSelectedMeal] = useState('Lunch');
+  const [menuDate, setMenuDate] = useState<string>('');
 
   const loadMenus = async () => {
     try {
       setIsLoading(true);
-      // TODO: Replace with real API call
-      // const menus = await getAvailableMenus();
-      const menus = await useMockApi.getAvailableMenus();
+      const menus = await getAvailableMenus();
       setAvailableMenus(menus);
+      
+      // Extract date from first menu item
+      if (menus.length > 0 && menus[0].date) {
+        setMenuDate(menus[0].date);
+      }
     } catch (error) {
       console.error('Failed to load menus:', error);
     } finally {
@@ -42,12 +46,25 @@ const MenusScreen: React.FC = () => {
   const filteredMenus = availableMenus.filter(
     (item) =>
       item.dining_hall?.short_name === selectedHall &&
-      item.category === selectedMeal.toLowerCase()
+      item.meal_type === selectedMeal.toLowerCase()
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
+        {/* Date Display */}
+        {menuDate && (
+          <View style={styles.dateHeader}>
+            <Text style={styles.dateText}>
+              📅 Menu for {new Date(menuDate + 'T12:00:00').toLocaleDateString('en-US', { 
+                weekday: 'long',
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </Text>
+          </View>
+        )}
+        
         {/* Dining Hall Selector */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Dining Hall</Text>
@@ -196,6 +213,17 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  dateHeader: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.white,
   },
   section: {
     paddingHorizontal: spacing.lg,
