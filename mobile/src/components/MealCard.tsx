@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { MealLogWithItem } from '../types';
 import { colors, spacing, fontSize, borderRadius, shadow } from '../constants/theme';
 
@@ -20,76 +21,114 @@ export const MealCard: React.FC<MealCardProps> = ({ meal, onPress, onDelete }) =
     minute: '2-digit',
   });
 
-  return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      activeOpacity={0.7}
-      disabled={!onPress}
-    >
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.titleSection}>
-            <Text style={styles.name}>{meal.menu_item.name}</Text>
-            <View style={styles.meta}>
-              <Text style={styles.metaText}>
-                {meal.servings > 1 ? `${meal.servings}x servings` : '1 serving'}
-              </Text>
-              <Text style={styles.dot}>•</Text>
-              <Text style={styles.metaText}>{logTime}</Text>
+  const renderRightActions = (
+    progress: Animated.AnimatedInterpolation<number>,
+    dragX: Animated.AnimatedInterpolation<number>
+  ) => {
+    const trans = dragX.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [0, 100],
+      extrapolate: 'clamp',
+    });
+
+    return (
+      <Animated.View
+        style={[
+          styles.deleteAction,
+          {
+            transform: [{ translateX: trans }],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.deleteActionButton}
+          onPress={onDelete}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.deleteActionText}>Delete</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  const cardContent = (
+    <View style={styles.cardWrapper}>
+      <TouchableOpacity
+        style={styles.container}
+        onPress={onPress}
+        activeOpacity={0.7}
+        disabled={!onPress}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.titleSection}>
+              <Text style={styles.name}>{meal.menu_item.name}</Text>
+              <View style={styles.meta}>
+                <Text style={styles.metaText}>
+                  {meal.servings > 1 ? `${meal.servings}x servings` : '1 serving'}
+                </Text>
+                <Text style={styles.dot}>•</Text>
+                <Text style={styles.metaText}>{logTime}</Text>
+              </View>
+              {meal.menu_item.station && (
+                <Text style={styles.station}>{meal.menu_item.station}</Text>
+              )}
             </View>
-            {meal.menu_item.station && (
-              <Text style={styles.station}>{meal.menu_item.station}</Text>
+
+            {meal.menu_item.nutrition && (
+              <View style={styles.caloriesSection}>
+                <Text style={styles.caloriesValue}>{totalCalories}</Text>
+                <Text style={styles.caloriesLabel}>kcal</Text>
+              </View>
             )}
           </View>
 
           {meal.menu_item.nutrition && (
-            <View style={styles.caloriesSection}>
-              <Text style={styles.caloriesValue}>{totalCalories}</Text>
-              <Text style={styles.caloriesLabel}>kcal</Text>
+            <View style={styles.macros}>
+              <MacroChip
+                label="P"
+                value={totalProtein}
+                color={colors.protein}
+              />
+              <MacroChip
+                label="C"
+                value={totalCarbs}
+                color={colors.carbs}
+              />
+              <MacroChip
+                label="F"
+                value={totalFat}
+                color={colors.fat}
+              />
+            </View>
+          )}
+
+          {meal.notes && (
+            <View style={styles.notesSection}>
+              <Text style={styles.notesLabel}>Note:</Text>
+              <Text style={styles.notesText}>{meal.notes}</Text>
             </View>
           )}
         </View>
-
-        {meal.menu_item.nutrition && (
-          <View style={styles.macros}>
-            <MacroChip
-              label="P"
-              value={totalProtein}
-              color={colors.protein}
-            />
-            <MacroChip
-              label="C"
-              value={totalCarbs}
-              color={colors.carbs}
-            />
-            <MacroChip
-              label="F"
-              value={totalFat}
-              color={colors.fat}
-            />
-          </View>
-        )}
-
-        {meal.notes && (
-          <View style={styles.notesSection}>
-            <Text style={styles.notesLabel}>Note:</Text>
-            <Text style={styles.notesText}>{meal.notes}</Text>
-          </View>
-        )}
-      </View>
-
-      {onDelete && (
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={onDelete}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.deleteIcon}>×</Text>
-        </TouchableOpacity>
-      )}
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
+
+  if (onDelete) {
+    return (
+      <View style={styles.swipeableWrapper}>
+        <Swipeable
+          renderRightActions={renderRightActions}
+          overshootRight={false}
+          friction={2}
+        >
+          {cardContent}
+        </Swipeable>
+      </View>
+    );
+  }
+
+  return cardContent;
 };
 
 interface MacroChipProps {
@@ -106,6 +145,15 @@ const MacroChip: React.FC<MacroChipProps> = ({ label, value, color }) => (
 );
 
 const styles = StyleSheet.create({
+  swipeableWrapper: {
+    ...shadow.md,
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+  },
+  cardWrapper: {
+    ...shadow.md,
+    borderRadius: borderRadius.xl,
+  },
   container: {
     backgroundColor: colors.white,
     borderRadius: borderRadius.xl,
@@ -113,7 +161,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.md,
-    ...shadow.md,
   },
   content: {
     flex: 1,
@@ -123,10 +170,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    gap: spacing.md,
   },
   titleSection: {
     flex: 1,
     gap: spacing.xs / 2,
+    marginRight: spacing.sm,
   },
   name: {
     fontSize: fontSize.base,
@@ -206,18 +255,22 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
-  deleteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.gray100,
-    alignItems: 'center',
+  deleteAction: {
+    backgroundColor: colors.error,
     justifyContent: 'center',
+    alignItems: 'flex-end',
+    marginLeft: spacing.xs,
   },
-  deleteIcon: {
-    fontSize: 24,
-    color: colors.error,
-    fontWeight: '600',
+  deleteActionButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 100,
+    height: '100%',
+  },
+  deleteActionText: {
+    color: colors.white,
+    fontSize: fontSize.base,
+    fontWeight: '700',
   },
 });
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useStore } from '../store/useStore';
 import { useAuth } from '../hooks/useAuth';
 import { colors, fontSize, spacing } from '../constants/theme';
@@ -135,20 +136,22 @@ export const RootNavigator: React.FC = () => {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!isAuthenticated ? (
-          // Not logged in - show login
-          <Stack.Screen name="Login" component={LoginScreen} />
-        ) : !hasCompletedOnboarding ? (
-          // Logged in but no profile - show onboarding
-          <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
-        ) : (
-          // Logged in and has profile - show main app
-          <Stack.Screen name="Main" component={MainNavigator} />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {!isAuthenticated ? (
+            // Not logged in - show login
+            <Stack.Screen name="Login" component={LoginScreen} />
+          ) : !hasCompletedOnboarding ? (
+            // Logged in but no profile - show onboarding
+            <Stack.Screen name="Onboarding" component={OnboardingNavigator} />
+          ) : (
+            // Logged in and has profile - show main app
+            <Stack.Screen name="Main" component={MainNavigator} />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 };
 
