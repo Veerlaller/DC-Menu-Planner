@@ -59,35 +59,36 @@ export const MacroProgressBar: React.FC<MacroProgressBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: spacing.xs / 2,
   },
   labelSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   icon: {
-    fontSize: 20,
+    fontSize: 18,
   },
   label: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.text,
   },
   value: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.base,
     fontWeight: '700',
     color: colors.text,
   },
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
     color: colors.error,
   },
   barContainer: {
-    height: 8,
+    height: 6,
     backgroundColor: colors.gray200,
     borderRadius: borderRadius.full,
     overflow: 'hidden',
@@ -105,7 +106,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   remaining: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     color: colors.textSecondary,
   },
 });

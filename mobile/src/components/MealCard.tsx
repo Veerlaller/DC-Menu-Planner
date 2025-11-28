@@ -146,12 +146,12 @@ const MacroChip: React.FC<MacroChipProps> = ({ label, value, color }) => (
 
 const styles = StyleSheet.create({
   swipeableWrapper: {
-    ...shadow.md,
+    ...shadow.sm,
     borderRadius: borderRadius.xl,
     overflow: 'hidden',
   },
   cardWrapper: {
-    ...shadow.md,
+    ...shadow.sm,
     borderRadius: borderRadius.xl,
   },
   container: {
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   header: {
     flexDirection: 'row',
@@ -204,19 +204,19 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   caloriesValue: {
-    fontSize: fontSize['3xl'],
+    fontSize: fontSize['2xl'],
     fontWeight: '700',
     color: colors.text,
-    lineHeight: 32,
+    lineHeight: 28,
   },
   caloriesLabel: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     color: colors.textSecondary,
     fontWeight: '400',
   },
   macros: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   macroChip: {
     flexDirection: 'row',
