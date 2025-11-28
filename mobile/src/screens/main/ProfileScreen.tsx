@@ -20,11 +20,23 @@ const ProfileScreen: React.FC = () => {
   const { userProfile, userPreferences, reset, setUserProfile } = useStore();
   const { user, signOut } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [editForm, setEditForm] = useState({
     weight_lbs: userProfile?.weight_lbs.toString() || '',
     height_inches: userProfile?.height_inches.toString() || '',
     age: userProfile?.age.toString() || '',
+  });
+  const [preferencesForm, setPreferencesForm] = useState({
+    is_vegetarian: userPreferences?.is_vegetarian || false,
+    is_vegan: userPreferences?.is_vegan || false,
+    is_pescatarian: userPreferences?.is_pescatarian || false,
+    is_gluten_free: userPreferences?.is_gluten_free || false,
+    is_dairy_free: userPreferences?.is_dairy_free || false,
+    is_halal: userPreferences?.is_halal || false,
+    is_kosher: userPreferences?.is_kosher || false,
+    is_hindu_non_veg: userPreferences?.is_hindu_non_veg || false,
+    allergies: userPreferences?.allergies?.join(', ') || '',
   });
 
   const handleSignOut = () => {
@@ -53,6 +65,23 @@ const ProfileScreen: React.FC = () => {
         age: userProfile.age.toString(),
       });
       setShowEditModal(true);
+    }
+  };
+
+  const handleEditPreferences = () => {
+    if (userPreferences) {
+      setPreferencesForm({
+        is_vegetarian: userPreferences.is_vegetarian,
+        is_vegan: userPreferences.is_vegan,
+        is_pescatarian: userPreferences.is_pescatarian,
+        is_gluten_free: userPreferences.is_gluten_free,
+        is_dairy_free: userPreferences.is_dairy_free,
+        is_halal: userPreferences.is_halal,
+        is_kosher: userPreferences.is_kosher,
+        is_hindu_non_veg: userPreferences.is_hindu_non_veg,
+        allergies: userPreferences.allergies?.join(', ') || '',
+      });
+      setShowPreferencesModal(true);
     }
   };
 
@@ -96,6 +125,61 @@ const ProfileScreen: React.FC = () => {
     } catch (error: any) {
       console.error('Failed to update profile:', error);
       Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    if (!user || !userPreferences) return;
+
+    try {
+      setIsUpdating(true);
+
+      // Parse allergies from comma-separated string
+      const allergiesArray = preferencesForm.allergies
+        .split(',')
+        .map(a => a.trim())
+        .filter(a => a.length > 0);
+
+      // Update preferences in database
+      const { error } = await supabase
+        .from('user_preferences')
+        .update({
+          is_vegetarian: preferencesForm.is_vegetarian,
+          is_vegan: preferencesForm.is_vegan,
+          is_pescatarian: preferencesForm.is_pescatarian,
+          is_gluten_free: preferencesForm.is_gluten_free,
+          is_dairy_free: preferencesForm.is_dairy_free,
+          is_halal: preferencesForm.is_halal,
+          is_kosher: preferencesForm.is_kosher,
+          is_hindu_non_veg: preferencesForm.is_hindu_non_veg,
+          allergies: allergiesArray,
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      const { setUserPreferences } = useStore.getState();
+      setUserPreferences({
+        ...userPreferences,
+        is_vegetarian: preferencesForm.is_vegetarian,
+        is_vegan: preferencesForm.is_vegan,
+        is_pescatarian: preferencesForm.is_pescatarian,
+        is_gluten_free: preferencesForm.is_gluten_free,
+        is_dairy_free: preferencesForm.is_dairy_free,
+        is_halal: preferencesForm.is_halal,
+        is_kosher: preferencesForm.is_kosher,
+        is_hindu_non_veg: preferencesForm.is_hindu_non_veg,
+        allergies: allergiesArray,
+      });
+
+      setShowPreferencesModal(false);
+      Alert.alert('Success', 'Dietary preferences updated successfully!');
+    } catch (error: any) {
+      console.error('Failed to update preferences:', error);
+      Alert.alert('Error', 'Failed to update preferences. Please try again.');
     } finally {
       setIsUpdating(false);
     }
@@ -312,7 +396,11 @@ const ProfileScreen: React.FC = () => {
             </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            activeOpacity={0.8}
+            onPress={handleEditPreferences}
+          >
             <View style={styles.actionButtonContent}>
               <Text style={styles.actionButtonIcon}>🍽️</Text>
               <View style={styles.actionButtonTextContainer}>
@@ -419,6 +507,217 @@ const ProfileScreen: React.FC = () => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonPrimary]}
                 onPress={handleSaveProfile}
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <ActivityIndicator color={colors.white} />
+                ) : (
+                  <Text style={styles.modalButtonPrimaryText}>Save Changes</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Dietary Preferences Modal */}
+      <Modal
+        visible={showPreferencesModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowPreferencesModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Dietary Preferences</Text>
+              <TouchableOpacity 
+                onPress={() => setShowPreferencesModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScrollView}>
+              <View style={styles.modalBody}>
+                <Text style={styles.preferencesSectionTitle}>Diet Type</Text>
+                
+                <TouchableOpacity 
+                  style={styles.checkboxRow}
+                  onPress={() => setPreferencesForm({
+                    ...preferencesForm, 
+                    is_vegetarian: !preferencesForm.is_vegetarian
+                  })}
+                >
+                  <View style={styles.checkbox}>
+                    {preferencesForm.is_vegetarian && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </View>
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text style={styles.checkboxLabel}>🥗 Vegetarian</Text>
+                    <Text style={styles.checkboxSubtext}>No meat or fish</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.checkboxRow}
+                  onPress={() => setPreferencesForm({
+                    ...preferencesForm, 
+                    is_vegan: !preferencesForm.is_vegan
+                  })}
+                >
+                  <View style={styles.checkbox}>
+                    {preferencesForm.is_vegan && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </View>
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text style={styles.checkboxLabel}>🌱 Vegan</Text>
+                    <Text style={styles.checkboxSubtext}>No animal products</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.checkboxRow}
+                  onPress={() => setPreferencesForm({
+                    ...preferencesForm, 
+                    is_pescatarian: !preferencesForm.is_pescatarian
+                  })}
+                >
+                  <View style={styles.checkbox}>
+                    {preferencesForm.is_pescatarian && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </View>
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text style={styles.checkboxLabel}>🐟 Pescatarian</Text>
+                    <Text style={styles.checkboxSubtext}>Fish but no other meat</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <Text style={styles.preferencesSectionTitle}>Allergens & Intolerances</Text>
+                
+                <TouchableOpacity 
+                  style={styles.checkboxRow}
+                  onPress={() => setPreferencesForm({
+                    ...preferencesForm, 
+                    is_gluten_free: !preferencesForm.is_gluten_free
+                  })}
+                >
+                  <View style={styles.checkbox}>
+                    {preferencesForm.is_gluten_free && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </View>
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text style={styles.checkboxLabel}>🌾 Gluten-Free</Text>
+                    <Text style={styles.checkboxSubtext}>No wheat, barley, rye</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.checkboxRow}
+                  onPress={() => setPreferencesForm({
+                    ...preferencesForm, 
+                    is_dairy_free: !preferencesForm.is_dairy_free
+                  })}
+                >
+                  <View style={styles.checkbox}>
+                    {preferencesForm.is_dairy_free && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </View>
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text style={styles.checkboxLabel}>🥛 Dairy-Free</Text>
+                    <Text style={styles.checkboxSubtext}>No milk products</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <Text style={styles.preferencesSectionTitle}>Religious Dietary Laws</Text>
+                
+                <TouchableOpacity 
+                  style={styles.checkboxRow}
+                  onPress={() => setPreferencesForm({
+                    ...preferencesForm, 
+                    is_halal: !preferencesForm.is_halal
+                  })}
+                >
+                  <View style={styles.checkbox}>
+                    {preferencesForm.is_halal && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </View>
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text style={styles.checkboxLabel}>☪️ Halal</Text>
+                    <Text style={styles.checkboxSubtext}>Islamic dietary law</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.checkboxRow}
+                  onPress={() => setPreferencesForm({
+                    ...preferencesForm, 
+                    is_kosher: !preferencesForm.is_kosher
+                  })}
+                >
+                  <View style={styles.checkbox}>
+                    {preferencesForm.is_kosher && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </View>
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text style={styles.checkboxLabel}>✡️ Kosher</Text>
+                    <Text style={styles.checkboxSubtext}>Jewish dietary law</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.checkboxRow}
+                  onPress={() => setPreferencesForm({
+                    ...preferencesForm, 
+                    is_hindu_non_veg: !preferencesForm.is_hindu_non_veg
+                  })}
+                >
+                  <View style={styles.checkbox}>
+                    {preferencesForm.is_hindu_non_veg && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </View>
+                  <View style={styles.checkboxLabelContainer}>
+                    <Text style={styles.checkboxLabel}>🕉️ Hindu Non-Veg</Text>
+                    <Text style={styles.checkboxSubtext}>No beef or pork</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <Text style={styles.preferencesSectionTitle}>Specific Allergies</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>List any specific allergies</Text>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    value={preferencesForm.allergies}
+                    onChangeText={(text) => setPreferencesForm({ ...preferencesForm, allergies: text })}
+                    placeholder="e.g., peanuts, shellfish, tree nuts"
+                    multiline
+                    numberOfLines={3}
+                  />
+                  <Text style={styles.inputHint}>Separate multiple allergies with commas</Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSecondary]}
+                onPress={() => setShowPreferencesModal(false)}
+                disabled={isUpdating}
+              >
+                <Text style={styles.modalButtonSecondaryText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonPrimary]}
+                onPress={handleSavePreferences}
                 disabled={isUpdating}
               >
                 {isUpdating ? (
@@ -875,6 +1174,58 @@ const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '700',
     color: colors.white,
+  },
+  modalScrollView: {
+    maxHeight: 500,
+  },
+  preferencesSectionTitle: {
+    fontSize: fontSize.base,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.gray50,
+    marginBottom: spacing.sm,
+  },
+  checkbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+  },
+  checkmark: {
+    fontSize: 18,
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  checkboxLabelContainer: {
+    flex: 1,
+    gap: spacing.xs / 2,
+  },
+  checkboxLabel: {
+    fontSize: fontSize.base,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  checkboxSubtext: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
 });
 
