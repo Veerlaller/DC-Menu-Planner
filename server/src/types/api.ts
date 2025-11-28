@@ -227,3 +227,50 @@ export interface ErrorResponse {
   details?: string;
 }
 
+// Recommendation Types
+export interface Recommendation {
+  item: RecommendedMenuItem;
+  score: number;
+  breakdown: RecommendationScoreBreakdown;
+  reasoning: string[];
+}
+
+export interface RecommendedMenuItem {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  station: string | null;
+  dining_hall: {
+    id: string;
+    name: string;
+    short_name: string;
+  } | null;
+  nutrition: {
+    calories: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+    fiber_g?: number;
+    sugar_g?: number;
+    sodium_mg?: number;
+  } | null;
+  is_vegetarian: boolean;
+  is_vegan: boolean;
+}
+
+export interface RecommendationScoreBreakdown {
+  macro_score: number;
+  preference_score: number;
+  variety_score: number;
+  availability_score: number;
+}
+
+export interface RecommendationsResponse {
+  success: boolean;
+  date: string;
+  meal_period?: string;
+  remaining_macros: MacroTargets;
+  recommendations: Recommendation[];
+}
+
