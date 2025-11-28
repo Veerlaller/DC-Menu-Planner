@@ -76,7 +76,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   setHasCompletedOnboarding: (completed) => {
     set({ hasCompletedOnboarding: completed });
-    get().persistUserData();
+    // Don't persist this - we check it fresh from the API after authentication
   },
 
   setDailySummary: (summary) => set({ dailySummary: summary }),
@@ -97,7 +97,7 @@ export const useStore = create<AppState>((set, get) => ({
 
   reset: () => {
     set(initialState);
-    AsyncStorage.multiRemove(['userProfile', 'userPreferences', 'isAuthenticated', 'hasCompletedOnboarding']);
+    AsyncStorage.multiRemove(['userProfile', 'userPreferences', 'isAuthenticated']);
   },
 
   // Persist to AsyncStorage
@@ -108,7 +108,7 @@ export const useStore = create<AppState>((set, get) => ({
         ['userProfile', JSON.stringify(state.userProfile)],
         ['userPreferences', JSON.stringify(state.userPreferences)],
         ['isAuthenticated', JSON.stringify(state.isAuthenticated)],
-        ['hasCompletedOnboarding', JSON.stringify(state.hasCompletedOnboarding)],
+        // Don't persist hasCompletedOnboarding - we check it fresh from API
       ]);
     } catch (error) {
       console.error('Failed to persist user data:', error);
@@ -118,7 +118,7 @@ export const useStore = create<AppState>((set, get) => ({
   // Load from AsyncStorage
   loadPersistedData: async () => {
     try {
-      const keys = ['userProfile', 'userPreferences', 'isAuthenticated', 'hasCompletedOnboarding'];
+      const keys = ['userProfile', 'userPreferences', 'isAuthenticated'];
       const values = await AsyncStorage.multiGet(keys);
       
       const data: any = {};
@@ -132,7 +132,7 @@ export const useStore = create<AppState>((set, get) => ({
         userProfile: data.userProfile || null,
         userPreferences: data.userPreferences || null,
         isAuthenticated: data.isAuthenticated || false,
-        hasCompletedOnboarding: data.hasCompletedOnboarding || false,
+        // Don't load hasCompletedOnboarding - we check it fresh from API
       });
     } catch (error) {
       console.error('Failed to load persisted data:', error);

@@ -8,8 +8,15 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🔐 useAuth: Initializing...');
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔐 useAuth: Initial session:', session ? 'Found' : 'None');
+      if (session) {
+        console.log('   User ID:', session.user?.id);
+        console.log('   User Email:', session.user?.email);
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -18,13 +25,23 @@ export const useAuth = () => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔐 useAuth: Auth state changed -', event);
+      if (session) {
+        console.log('   User ID:', session.user?.id);
+        console.log('   User Email:', session.user?.email);
+      } else {
+        console.log('   Session:', 'None');
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('🔐 useAuth: Cleaning up subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {

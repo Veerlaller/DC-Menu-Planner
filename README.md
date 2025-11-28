@@ -1,4 +1,4 @@
-# 🍽️ DC Menu Planner
+# 🍽️ Ories.ai
 
 A comprehensive nutrition tracking app for UC Davis students using dining hall menus.
 

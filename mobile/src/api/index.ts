@@ -76,6 +76,42 @@ export const completeOnboarding = async (
   throw new Error(response.data.error || 'Failed to complete onboarding');
 };
 
+// Check if user has completed onboarding
+export const checkUserProfile = async (): Promise<boolean> => {
+  console.log('📡 API: Calling GET /api/onboarding...');
+  
+  try {
+    const response = await apiClient.get<any>('/onboarding');
+    
+    console.log('📡 API: Response received:', {
+      status: response.status,
+      hasProfile: !!response.data.profile,
+      hasPreferences: !!response.data.preferences,
+    });
+    
+    // If we get a successful response with profile data, user has completed onboarding
+    const hasCompleted = !!(response.data.profile && response.data.preferences);
+    console.log('📡 API: User has completed onboarding:', hasCompleted);
+    
+    return hasCompleted;
+  } catch (error: any) {
+    console.log('📡 API: Error response:', {
+      status: error.response?.status,
+      message: error.message,
+    });
+    
+    // 404 means user hasn't completed onboarding
+    if (error.response?.status === 404) {
+      console.log('📡 API: 404 - User has not completed onboarding');
+      return false;
+    }
+    
+    // For other errors, assume not completed to be safe
+    console.error('📡 API: Unexpected error checking profile:', error.message);
+    return false;
+  }
+};
+
 // ============================================
 // DAILY SUMMARY & MEAL LOGGING
 // ============================================

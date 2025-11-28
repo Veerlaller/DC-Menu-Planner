@@ -7,8 +7,10 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
-import { supabase } from '../../lib/supabase';
+import { supabase, redirectUrl } from '../../lib/supabase';
+import * as WebBrowser from 'expo-web-browser';
 import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
 
 const LoginScreen: React.FC = () => {
@@ -17,10 +19,15 @@ const LoginScreen: React.FC = () => {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
+      console.log('Starting Google Sign In...');
+      console.log('Platform:', Platform.OS);
+      console.log('Redirect URL:', redirectUrl);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'exp://localhost:8081',
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: Platform.OS !== 'web',
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -31,12 +38,77 @@ const LoginScreen: React.FC = () => {
       if (error) {
         console.error('Google sign in error:', error);
         Alert.alert('Sign In Error', error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      // For web, Supabase will automatically handle the OAuth redirect and session
+      // The page will redirect to Google, then back to our app with tokens in the URL
+      // Supabase's detectSessionInUrl will automatically capture and set the session
+      if (Platform.OS === 'web') {
+        console.log('🌐 Web platform: OAuth redirect will happen automatically');
+        console.log('   Supabase will detect session from URL after redirect');
+        // Don't set isLoading to false here - the page will redirect
+        return;
+      }
+
+      // For mobile/native apps, we need to open the auth URL in a browser
+      if (data?.url) {
+        console.log('📱 Mobile platform: Opening auth URL in browser...');
+        console.log('   Auth URL:', data.url);
+        
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectUrl
+        );
+
+        if (result.type === 'success' && result.url) {
+          console.log('✅ OAuth completed successfully');
+          console.log('   Callback URL:', result.url);
+          
+          // Extract the tokens from the callback URL
+          const url = new URL(result.url);
+          const access_token = url.searchParams.get('access_token');
+          const refresh_token = url.searchParams.get('refresh_token');
+
+          if (access_token && refresh_token) {
+            console.log('🔑 Tokens received, setting session...');
+            
+            // Set the session with the tokens
+            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+
+            if (sessionError) {
+              console.error('❌ Session error:', sessionError);
+              Alert.alert('Error', 'Failed to establish session');
+            } else {
+              console.log('✅ Session established successfully!');
+              console.log('   User ID:', sessionData.user?.id);
+              console.log('   User Email:', sessionData.user?.email);
+              console.log('📱 Navigation will be handled automatically by auth state listener');
+            }
+          } else {
+            console.error('❌ No tokens in callback URL');
+            console.log('   URL params:', Object.fromEntries(url.searchParams.entries()));
+            Alert.alert('Error', 'No tokens received from OAuth');
+          }
+        } else if (result.type === 'cancel') {
+          console.log('ℹ️ User cancelled sign in');
+        } else {
+          console.log('⚠️ OAuth result:', result);
+          Alert.alert('Error', 'Sign in was not completed');
+        }
       }
     } catch (error) {
       console.error('Unexpected error:', error);
-      Alert.alert('Error', 'Failed to sign in with Google');
+      Alert.alert('Error', 'Failed to sign in with Google. Make sure Supabase is configured.');
     } finally {
-      setIsLoading(false);
+      // Only set loading to false for mobile - web will redirect
+      if (Platform.OS !== 'web') {
+        setIsLoading(false);
+      }
     }
   };
 

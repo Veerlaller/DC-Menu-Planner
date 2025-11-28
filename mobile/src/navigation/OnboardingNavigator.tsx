@@ -21,6 +21,7 @@ const Stack = createStackNavigator<OnboardingStackParamList>();
 export const OnboardingNavigator: React.FC = () => {
   return (
     <Stack.Navigator
+      initialRouteName="BasicInfo"
       screenOptions={{
         headerShown: false,
         cardStyle: { backgroundColor: '#ffffff' },

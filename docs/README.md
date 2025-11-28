@@ -11,6 +11,10 @@
   - 20-minute setup guide for authentication
 
 ### Setup Guides
+- **[Fix Google Sign-In](setup/FIX_GOOGLE_SIGNIN.md)** ⭐ NEW!
+  - Quick fix for "sign in doesn't work" issue
+  - Step-by-step configuration guide
+  - React Native OAuth implementation
 - **[Google OAuth Setup](setup/GOOGLE_OAUTH_SETUP.md)**
   - Complete guide to setting up Google authentication
   - Supabase configuration
@@ -141,8 +145,9 @@ Scraper → JSON → Database → API → Mobile App
 
 ### Common Issues
 
-1. **Can't sign in with Google?**
-   → See [Google OAuth Setup](setup/GOOGLE_OAUTH_SETUP.md)
+1. **Can't sign in with Google?** ⭐
+   → See [Fix Google Sign-In](setup/FIX_GOOGLE_SIGNIN.md) - **NEW!**
+   → Or [Google OAuth Setup](setup/GOOGLE_OAUTH_SETUP.md)
 
 2. **Database errors?**
    → See [Fix Database](troubleshooting/FIX_DATABASE.md)

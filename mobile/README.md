@@ -1,4 +1,4 @@
-# DC Menu Planner - Mobile App
+# Ories.ai - Mobile App
 
 A React Native mobile application for UC Davis students to track their nutrition using dining hall menus.
 
