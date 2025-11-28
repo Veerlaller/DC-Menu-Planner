@@ -81,6 +81,90 @@ export interface TodayResponse {
   remaining: MacroTargets;
 }
 
+// Menu Types
+export interface DiningHall {
+  id: string;
+  name: string;
+  short_name: string;
+  location?: string;
+  is_active?: boolean;
+}
+
+export interface NutritionFacts {
+  id?: string;
+  menu_item_id?: string;
+  serving_size?: string;
+  serving_size_g?: number;
+  calories?: number;
+  protein_g?: number;
+  carbs_g?: number;
+  fat_g?: number;
+  saturated_fat_g?: number;
+  trans_fat_g?: number;
+  fiber_g?: number;
+  sugar_g?: number;
+  sodium_mg?: number;
+  cholesterol_mg?: number;
+  calcium_mg?: number;
+  iron_mg?: number;
+  vitamin_a_mcg?: number;
+  vitamin_c_mg?: number;
+}
+
+export interface MenuItem {
+  id: string;
+  menu_day_id?: string;
+  name: string;
+  description?: string;
+  category?: 'entree' | 'side' | 'salad' | 'soup' | 'dessert' | 'beverage' | 'condiment' | 'other';
+  station?: string;
+  is_vegetarian: boolean;
+  is_vegan: boolean;
+  contains_gluten: boolean;
+  contains_dairy: boolean;
+  contains_nuts: boolean;
+  allergen_info: string[];
+  meal_type?: string;
+  date?: string;
+  start_time?: string;
+  end_time?: string;
+  dining_hall?: DiningHall | null;
+  nutrition?: NutritionFacts | null;
+}
+
+export interface MenuDay {
+  id: string;
+  dining_hall_id: string;
+  date: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'brunch' | 'late_night';
+  start_time?: string;
+  end_time?: string;
+  is_available: boolean;
+  dining_hall?: DiningHall;
+  items?: MenuItem[];
+}
+
+// Menu Response Types
+export interface MenusResponse {
+  success: boolean;
+  date?: string;
+  filters?: {
+    hall?: string | null;
+    meal_type?: string | null;
+  };
+  data: MenuItem[];
+}
+
+export interface MenuItemResponse {
+  success: boolean;
+  data: MenuItem;
+}
+
+export interface DiningHallsResponse {
+  success: boolean;
+  data: DiningHall[];
+}
+
 // Meal Logging Types
 export interface MealLog {
   id: string;
