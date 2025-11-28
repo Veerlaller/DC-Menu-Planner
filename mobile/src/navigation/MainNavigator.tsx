@@ -12,34 +12,34 @@ import ProfileScreen from '../screens/main/ProfileScreen';
 import WeeklyStatsScreen from '../screens/main/WeeklyStatsScreen';
 
 export type MainTabParamList = {
-  TodayTab: undefined;
+  HomeTab: undefined;
   Menus: undefined;
   HungryNow: undefined;
   Profile: undefined;
 };
 
-export type TodayStackParamList = {
-  Today: undefined;
+export type HomeStackParamList = {
+  Home: undefined;
   WeeklyStats: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-const TodayStack = createStackNavigator<TodayStackParamList>();
+const HomeStack = createStackNavigator<HomeStackParamList>();
 
-// Stack navigator for Today tab
-const TodayStackNavigator: React.FC = () => {
+// Stack navigator for Home tab
+const HomeStackNavigator: React.FC = () => {
   return (
-    <TodayStack.Navigator screenOptions={{ headerShown: false }}>
-      <TodayStack.Screen name="Today" component={TodayScreen} />
-      <TodayStack.Screen name="WeeklyStats" component={WeeklyStatsScreen} />
-    </TodayStack.Navigator>
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={TodayScreen} />
+      <HomeStack.Screen name="WeeklyStats" component={WeeklyStatsScreen} />
+    </HomeStack.Navigator>
   );
 };
 
 // Simple icon component (you can replace with react-native-vector-icons later)
 const TabIcon: React.FC<{ name: string; focused: boolean }> = ({ name, focused }) => {
   const icons: { [key: string]: string } = {
-    TodayTab: '📊',
+    HomeTab: '🏠',
     Menus: '🍽️',
     HungryNow: '🔔',
     Profile: '👤',
@@ -67,9 +67,9 @@ export const MainNavigator: React.FC = () => {
       })}
     >
       <Tab.Screen 
-        name="TodayTab"
-        component={TodayStackNavigator}
-        options={{ tabBarLabel: 'Today' }}
+        name="HomeTab"
+        component={HomeStackNavigator}
+        options={{ tabBarLabel: 'Home' }}
       />
       <Tab.Screen 
         name="Menus" 

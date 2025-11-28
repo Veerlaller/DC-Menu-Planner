@@ -146,7 +146,7 @@ const MenusScreen: React.FC = () => {
       });
       
       console.log('✅ Meal logged successfully!');
-      alert(`✅ ${item.name} logged!\n\nSwitch to the Today tab to see your updated progress.`);
+      alert(`✅ ${item.name} logged!\n\nSwitch to the Home tab to see your updated progress.`);
     } catch (error) {
       console.error('❌ Failed to log meal:', error);
       alert('Failed to log meal. Please try again.');

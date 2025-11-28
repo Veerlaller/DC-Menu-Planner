@@ -48,7 +48,7 @@ const TodayScreen: React.FC = () => {
   // Refresh data whenever the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      console.log('📱 Today screen focused - refreshing data...');
+      console.log('📱 Home screen focused - refreshing data...');
       loadDailySummary();
     }, [])
   );
@@ -148,6 +148,19 @@ const TodayScreen: React.FC = () => {
           </Text>
         </View>
 
+        {/* Log Meal Button */}
+        <TouchableOpacity
+          style={styles.logMealButton}
+          onPress={() => {
+            // @ts-ignore - Navigate to Menus tab
+            navigation.navigate('Menus');
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.logMealIcon}>🍽️</Text>
+          <Text style={styles.logMealText}>Log a Meal</Text>
+        </TouchableOpacity>
+
         {/* Macros Section */}
         <View style={styles.macrosSection}>
           <Text style={styles.sectionTitle}>Macronutrients</Text>
@@ -186,7 +199,7 @@ const TodayScreen: React.FC = () => {
         {/* Meals Logged */}
         <View style={styles.mealsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Meals Logged Today</Text>
+            <Text style={styles.sectionTitle}>Today's Meals</Text>
             <Text style={styles.mealCount}>
               {dailySummary.meals_logged.length} {dailySummary.meals_logged.length === 1 ? 'meal' : 'meals'}
             </Text>
@@ -216,19 +229,6 @@ const TodayScreen: React.FC = () => {
             </View>
           )}
         </View>
-
-        {/* Log Meal Button */}
-        <TouchableOpacity
-          style={styles.logMealButton}
-          onPress={() => {
-            // @ts-ignore - Navigate to Menus tab
-            navigation.navigate('Menus');
-          }}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.logMealIcon}>🍽️</Text>
-          <Text style={styles.logMealText}>Log a Meal</Text>
-        </TouchableOpacity>
 
         {/* Quick Actions */}
         <View style={styles.actionsSection}>
