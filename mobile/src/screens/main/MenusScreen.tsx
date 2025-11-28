@@ -30,6 +30,8 @@ const MenusScreen: React.FC = () => {
   });
   const [menuDate, setMenuDate] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
+  const [hallSectionCollapsed, setHallSectionCollapsed] = useState(false);
+  const [mealSectionCollapsed, setMealSectionCollapsed] = useState(false);
 
   const loadMenus = async () => {
     try {
@@ -232,89 +234,111 @@ const MenusScreen: React.FC = () => {
         
         {/* Dining Hall Selector */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Dining Hall</Text>
-          {availableHalls.length === 0 && !isLoading ? (
-            <View style={styles.noDataHint}>
-              <Text style={styles.noDataText}>
-                No dining halls available. Menu data may not be loaded yet.
-              </Text>
-            </View>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.hallsScroll}
-            >
-              <TouchableOpacity
-                style={[styles.hallChip, selectedHall === null && styles.hallChipActive]}
-                onPress={() => setSelectedHall(null)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.hallText, selectedHall === null && styles.hallTextActive]}>
-                  All Halls
-                </Text>
-              </TouchableOpacity>
-              {availableHalls.map((hall) => {
-                if (!hall || typeof hall !== 'string' || hall.length === 0) return null;
-                return (
+          <TouchableOpacity 
+            style={styles.sectionHeader}
+            onPress={() => setHallSectionCollapsed(!hallSectionCollapsed)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.sectionLabel}>Dining Hall</Text>
+            <Text style={styles.collapseIcon}>{hallSectionCollapsed ? '▼' : '▲'}</Text>
+          </TouchableOpacity>
+          {!hallSectionCollapsed && (
+            <>
+              {availableHalls.length === 0 && !isLoading ? (
+                <View style={styles.noDataHint}>
+                  <Text style={styles.noDataText}>
+                    No dining halls available. Menu data may not be loaded yet.
+                  </Text>
+                </View>
+              ) : (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.hallsScroll}
+                >
                   <TouchableOpacity
-                    key={hall}
-                    style={[styles.hallChip, selectedHall === hall && styles.hallChipActive]}
-                    onPress={() => {
-                      console.log('🏢 Selected hall:', hall);
-                      setSelectedHall(hall);
-                    }}
+                    style={[styles.hallChip, selectedHall === null && styles.hallChipActive]}
+                    onPress={() => setSelectedHall(null)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.hallText, selectedHall === hall && styles.hallTextActive]}>
-                      {hall}
+                    <Text style={[styles.hallText, selectedHall === null && styles.hallTextActive]}>
+                      All Halls
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+                  {availableHalls.map((hall) => {
+                    if (!hall || typeof hall !== 'string' || hall.length === 0) return null;
+                    return (
+                      <TouchableOpacity
+                        key={hall}
+                        style={[styles.hallChip, selectedHall === hall && styles.hallChipActive]}
+                        onPress={() => {
+                          console.log('🏢 Selected hall:', hall);
+                          setSelectedHall(hall);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.hallText, selectedHall === hall && styles.hallTextActive]}>
+                          {hall}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              )}
+            </>
           )}
         </View>
 
         {/* Meal Type Selector */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Meal</Text>
-          {availableMeals.length === 0 && !isLoading ? (
-            <View style={styles.noDataHint}>
-              <Text style={styles.noDataText}>No meal types available</Text>
-            </View>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.mealButtons}
-            >
-              <TouchableOpacity
-                style={[styles.mealButton, selectedMeal === null && styles.mealButtonActive]}
-                onPress={() => setSelectedMeal(null)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.mealText, selectedMeal === null && styles.mealTextActive]}>
-                  All Meals
-                </Text>
-              </TouchableOpacity>
-              {availableMeals.map((meal) => {
-                if (!meal || typeof meal !== 'string' || meal.length === 0) return null;
-                const displayMeal = meal.charAt(0).toUpperCase() + meal.slice(1);
-                return (
+          <TouchableOpacity 
+            style={styles.sectionHeader}
+            onPress={() => setMealSectionCollapsed(!mealSectionCollapsed)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.sectionLabel}>Meal</Text>
+            <Text style={styles.collapseIcon}>{mealSectionCollapsed ? '▼' : '▲'}</Text>
+          </TouchableOpacity>
+          {!mealSectionCollapsed && (
+            <>
+              {availableMeals.length === 0 && !isLoading ? (
+                <View style={styles.noDataHint}>
+                  <Text style={styles.noDataText}>No meal types available</Text>
+                </View>
+              ) : (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.mealButtons}
+                >
                   <TouchableOpacity
-                    key={meal}
-                    style={[styles.mealButton, selectedMeal === meal && styles.mealButtonActive]}
-                    onPress={() => setSelectedMeal(meal)}
+                    style={[styles.mealButton, selectedMeal === null && styles.mealButtonActive]}
+                    onPress={() => setSelectedMeal(null)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.mealText, selectedMeal === meal && styles.mealTextActive]}>
-                      {displayMeal}
+                    <Text style={[styles.mealText, selectedMeal === null && styles.mealTextActive]}>
+                      All Meals
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+                  {availableMeals.map((meal) => {
+                    if (!meal || typeof meal !== 'string' || meal.length === 0) return null;
+                    const displayMeal = meal.charAt(0).toUpperCase() + meal.slice(1);
+                    return (
+                      <TouchableOpacity
+                        key={meal}
+                        style={[styles.mealButton, selectedMeal === meal && styles.mealButtonActive]}
+                        onPress={() => setSelectedMeal(meal)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.mealText, selectedMeal === meal && styles.mealTextActive]}>
+                          {displayMeal}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              )}
+            </>
           )}
         </View>
 
@@ -483,11 +507,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
   sectionLabel: {
     fontSize: fontSize.base,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: spacing.md,
+  },
+  collapseIcon: {
+    fontSize: fontSize.base,
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   hallsScroll: {
     gap: spacing.md,
