@@ -44,19 +44,37 @@ npm run scrape -- --hall=latitude --date=2025-11-24
 
 ### Command Line Arguments
 
-**`--hall`** (required): Dining hall to scrape
+**`--hall`** (optional): Dining hall to scrape
 - `latitude` - Latitude Dining Commons
 - `cuarto` - Cuarto Dining Commons  
 - `segundo` - Segundo Dining Commons
 - `tercero` - Tercero Dining Commons
+- If not specified, scrapes all halls
 
 **`--date`** (optional): Date to scrape (YYYY-MM-DD format)
 - Defaults to today
 - Example: `2025-11-24`
 
+**`--day`** (optional): Day of the week to scrape
+- Finds the next occurrence of that day
+- Valid values: `Monday`, `Tuesday`, `Wednesday`, `Thursday`, `Friday`, `Saturday`, `Sunday`
+- Example: `--day=Monday`
+- Cannot be used with `--date`
+
+**`--output`** (optional): Path to save JSON output
+- Defaults to `../data/menu.json`
+
+**`--no-db`** (optional): Skip storing data in Supabase
+- Only saves to JSON file
+
+**`--clear`** (optional): Clear existing menu data before scraping
+
 ### Examples
 
 ```bash
+# Scrape all halls for today
+npm run scrape
+
 # Scrape Cuarto for today
 npm run scrape -- --hall=cuarto
 
@@ -65,6 +83,15 @@ npm run scrape -- --hall=latitude --date=2025-11-24
 
 # Scrape Segundo for yesterday
 npm run scrape -- --hall=segundo --date=2025-11-23
+
+# Scrape all halls for next Monday
+npm run scrape -- --day=Monday
+
+# Scrape Cuarto for next Friday
+npm run scrape -- --day=Friday --hall=cuarto
+
+# Scrape next Wednesday without database storage
+npm run scrape -- --day=Wednesday --no-db
 ```
 
 ---

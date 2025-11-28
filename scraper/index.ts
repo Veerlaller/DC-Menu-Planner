@@ -18,6 +18,8 @@ async function main() {
 
 Options:
   --date=YYYY-MM-DD      Scrape menu for specific date (default: today)
+  --day=DAY_NAME         Scrape menu for a specific day of the week (Monday, Tuesday, etc.)
+                         Finds the next occurrence of that day
   --hall=HALL_NAME       Scrape only a specific hall (Latitude, Cuarto, Segundo, Tercero)
   --output=PATH          Path to save JSON output (default: ../data/menu.json)
   --no-db                Skip storing data in Supabase (only save to JSON)
@@ -27,6 +29,8 @@ Options:
 Examples:
   npm run scrape:dev                                    # Scrape all halls for today, store in DB and JSON
   npm run scrape:dev -- --date=2025-12-01               # Scrape specific date
+  npm run scrape:dev -- --day=Monday                    # Scrape next Monday's menu
+  npm run scrape:dev -- --day=Friday --hall=Cuarto      # Scrape Cuarto for next Friday
   npm run scrape:dev -- --hall=Cuarto                   # Scrape only Cuarto
   npm run scrape:dev -- --no-db                         # Only save to JSON, skip database
   npm run scrape:dev -- --clear --date=2025-12-01       # Clear and re-scrape specific date
@@ -42,12 +46,34 @@ Environment Variables (required for database storage):
   
   // Parse command line arguments
   const dateArg = args.find(arg => arg.startsWith('--date='));
+  const dayArg = args.find(arg => arg.startsWith('--day='));
   const hallArg = args.find(arg => arg.startsWith('--hall='));
   const outputArg = args.find(arg => arg.startsWith('--output='));
   const noDbArg = args.includes('--no-db');
   const clearArg = args.includes('--clear');
   
-  const date = dateArg ? new Date(dateArg.split('=')[1]) : new Date();
+  // Determine the target date
+  let date: Date;
+  
+  if (dateArg) {
+    // Use specific date if provided
+    date = new Date(dateArg.split('=')[1]);
+  } else if (dayArg) {
+    // Calculate date based on day of week
+    const dayName = dayArg.split('=')[1];
+    const calculatedDate = getNextDayOfWeek(dayName);
+    if (!calculatedDate) {
+      console.error(`❌ Invalid day name: ${dayName}`);
+      console.log(`Valid day names: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday`);
+      process.exit(1);
+    }
+    date = calculatedDate;
+    console.log(`📅 Scraping ${dayName}'s menu (${date.toDateString()})\n`);
+  } else {
+    // Default to today
+    date = new Date();
+  }
+  
   const outputPath = outputArg ? outputArg.split('=')[1] : '../data/menu.json';
   const useDatabase = !noDbArg;
   
@@ -181,6 +207,47 @@ Environment Variables (required for database storage):
     console.error('\n❌ Error:', error);
     process.exit(1);
   }
+}
+
+/**
+ * Get the date for the next occurrence of a specific day of the week
+ * @param dayName - Name of the day (Monday, Tuesday, etc.)
+ * @returns Date object for the next occurrence of that day, or null if invalid day name
+ */
+function getNextDayOfWeek(dayName: string): Date | null {
+  const dayMap: Record<string, number> = {
+    'sunday': 0,
+    'monday': 1,
+    'tuesday': 2,
+    'wednesday': 3,
+    'thursday': 4,
+    'friday': 5,
+    'saturday': 6
+  };
+  
+  const normalizedDay = dayName.toLowerCase();
+  const targetDay = dayMap[normalizedDay];
+  
+  if (targetDay === undefined) {
+    return null;
+  }
+  
+  const today = new Date();
+  const currentDay = today.getDay();
+  
+  // Calculate days until target day
+  let daysUntilTarget = targetDay - currentDay;
+  
+  // If target day is today or in the past this week, get next week's occurrence
+  if (daysUntilTarget <= 0) {
+    daysUntilTarget += 7;
+  }
+  
+  // Create new date
+  const targetDate = new Date(today);
+  targetDate.setDate(today.getDate() + daysUntilTarget);
+  
+  return targetDate;
 }
 
 /**
