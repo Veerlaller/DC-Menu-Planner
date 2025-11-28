@@ -190,14 +190,16 @@
 - ✅ **Nov 26**: Imperial units conversion
 - ✅ **Nov 26**: Proper UUID implementation
 - ✅ **Nov 26**: Documentation reorganized
+- ✅ **Nov 28**: Database FK constraints removed for development
 
 ---
 
 ## 🚀 Next Immediate Steps
 
 1. **Fix remaining database issues**:
-   - Remove foreign key constraints for testing
-   - Verify onboarding works end-to-end
+   - ✅ Remove foreign key constraints for testing (COMPLETED)
+   - Migration file created: `server/db/remove-auth-constraints.sql`
+   - ⏳ Verify onboarding works end-to-end (NEXT)
 
 2. **Implement meal logging**:
    - Backend: POST `/api/meals/log`
@@ -269,8 +271,8 @@
 - Deployment not configured
 
 ### Technical Debt
-- Remove foreign key constraints is temporary
-- UUID generation should use real auth
+- ✅ Foreign key constraints removed (temporary fix for development)
+- UUID generation should use real auth (future: implement proper Supabase Auth)
 - Mock data fallbacks should be removed
 - Error messages need improvement
 
