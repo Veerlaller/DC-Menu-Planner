@@ -148,17 +148,17 @@ const TodayScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Log Meal Button */}
+        {/* I'm Hungry Button */}
         <TouchableOpacity
           style={styles.logMealButton}
           onPress={() => {
-            // @ts-ignore - Navigate to Menus tab
-            navigation.navigate('Menus');
+            // @ts-ignore - Navigate to Hungry Now screen
+            navigation.navigate('HungryNow');
           }}
           activeOpacity={0.8}
         >
           <Text style={styles.logMealIcon}>🍽️</Text>
-          <Text style={styles.logMealText}>Log a Meal</Text>
+          <Text style={styles.logMealText}>I'm Hungry</Text>
         </TouchableOpacity>
 
         {/* Macros Section */}
