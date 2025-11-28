@@ -55,19 +55,49 @@ const ProfileScreen: React.FC = () => {
             </Text>
           </View>
           <Text style={styles.greeting}>Your Profile</Text>
+          <View style={styles.quickSummary}>
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>{userProfile.target_calories}</Text>
+              <Text style={styles.summaryLabel}>cal/day</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>{userProfile.target_protein_g}g</Text>
+              <Text style={styles.summaryLabel}>protein</Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>
+                {userProfile.goal === 'cut' ? '📉' : userProfile.goal === 'bulk' ? '💪' : '⚖️'}
+              </Text>
+              <Text style={styles.summaryLabel}>goal</Text>
+            </View>
+          </View>
         </View>
 
         {/* Stats Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Personal Info</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>📋 Personal Info</Text>
+          </View>
           <View style={styles.statsGrid}>
             <StatItem 
+              icon="📏"
               label="Height" 
               value={`${Math.floor(userProfile.height_inches / 12)}'${userProfile.height_inches % 12}"`} 
             />
-            <StatItem label="Weight" value={`${userProfile.weight_lbs} lbs`} />
-            <StatItem label="Age" value={`${userProfile.age} years`} />
+            <StatItem 
+              icon="⚖️"
+              label="Weight" 
+              value={`${userProfile.weight_lbs} lbs`} 
+            />
+            <StatItem 
+              icon="🎂"
+              label="Age" 
+              value={`${userProfile.age} years`} 
+            />
             <StatItem
+              icon={userProfile.sex === 'male' ? '👨' : '👩'}
               label="Sex"
               value={userProfile.sex.charAt(0).toUpperCase() + userProfile.sex.slice(1)}
             />
@@ -76,28 +106,45 @@ const ProfileScreen: React.FC = () => {
 
         {/* Goals Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Goals & Activity</Text>
-          <View style={styles.goalRow}>
-            <Text style={styles.goalLabel}>Goal:</Text>
-            <View style={styles.goalBadge}>
-              <Text style={styles.goalBadgeText}>
-                {userProfile.goal === 'cut' ? '📉 Cut' : 
-                 userProfile.goal === 'bulk' ? '💪 Bulk' : 
-                 '⚖️ Maintain'}
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>🎯 Goals & Activity</Text>
+          </View>
+          <View style={styles.goalContainer}>
+            <View style={styles.goalBadgeLarge}>
+              <Text style={styles.goalIconLarge}>
+                {userProfile.goal === 'cut' ? '📉' : 
+                 userProfile.goal === 'bulk' ? '💪' : 
+                 '⚖️'}
+              </Text>
+              <Text style={styles.goalBadgeTextLarge}>
+                {userProfile.goal === 'cut' ? 'Cutting' : 
+                 userProfile.goal === 'bulk' ? 'Bulking' : 
+                 'Maintaining'}
+              </Text>
+              <Text style={styles.goalDescription}>
+                {userProfile.goal === 'cut' ? 'Losing weight & preserving muscle' : 
+                 userProfile.goal === 'bulk' ? 'Building muscle & gaining strength' : 
+                 'Maintaining current physique'}
               </Text>
             </View>
-          </View>
-          <View style={styles.goalRow}>
-            <Text style={styles.goalLabel}>Activity:</Text>
-            <Text style={styles.goalValue}>
-              {userProfile.activity_level.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-            </Text>
+            <View style={styles.activityContainer}>
+              <Text style={styles.activityIcon}>🏃</Text>
+              <View>
+                <Text style={styles.activityLabel}>Activity Level</Text>
+                <Text style={styles.activityValue}>
+                  {userProfile.activity_level.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
         {/* Macro Targets Card */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Daily Targets</Text>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>🎯 Daily Targets</Text>
+            <Text style={styles.cardSubtitle}>Your personalized nutrition goals</Text>
+          </View>
           <View style={styles.macrosList}>
             <MacroRow
               label="Calories"
@@ -129,7 +176,9 @@ const ProfileScreen: React.FC = () => {
         {/* Dietary Preferences Card */}
         {userPreferences && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Dietary Preferences</Text>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>🥗 Dietary Preferences</Text>
+            </View>
             <View style={styles.preferencesList}>
               {userPreferences.is_vegetarian && <PreferencePill text="🥗 Vegetarian" />}
               {userPreferences.is_vegan && <PreferencePill text="🌱 Vegan" />}
@@ -166,30 +215,59 @@ const ProfileScreen: React.FC = () => {
         {/* User Account Info */}
         {user && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Account</Text>
-            <View style={styles.accountInfo}>
-              <Text style={styles.accountLabel}>Email</Text>
-              <Text style={styles.accountValue}>{user.email}</Text>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>👤 Account</Text>
+            </View>
+            <View style={styles.accountInfoRow}>
+              <Text style={styles.accountIcon}>📧</Text>
+              <View style={styles.accountInfo}>
+                <Text style={styles.accountLabel}>Email Address</Text>
+                <Text style={styles.accountValue}>{user.email}</Text>
+              </View>
             </View>
           </View>
         )}
 
         {/* Actions */}
         <View style={styles.actionsSection}>
+          <Text style={styles.actionsSectionTitle}>Settings</Text>
           <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
-            <Text style={styles.actionButtonText}>Edit Profile</Text>
+            <View style={styles.actionButtonContent}>
+              <Text style={styles.actionButtonIcon}>✏️</Text>
+              <View style={styles.actionButtonTextContainer}>
+                <Text style={styles.actionButtonText}>Edit Profile</Text>
+                <Text style={styles.actionButtonSubtext}>Update your personal information</Text>
+              </View>
+            </View>
+            <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
-            <Text style={styles.actionButtonText}>Update Preferences</Text>
+            <View style={styles.actionButtonContent}>
+              <Text style={styles.actionButtonIcon}>🍽️</Text>
+              <View style={styles.actionButtonTextContainer}>
+                <Text style={styles.actionButtonText}>Dietary Preferences</Text>
+                <Text style={styles.actionButtonSubtext}>Manage restrictions & allergies</Text>
+              </View>
+            </View>
+            <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.dangerButton]}
             onPress={handleSignOut}
             activeOpacity={0.8}
           >
-            <Text style={[styles.actionButtonText, styles.dangerButtonText]}>
-              Sign Out
-            </Text>
+            <View style={styles.actionButtonContent}>
+              <Text style={styles.actionButtonIcon}>🚪</Text>
+              <View style={styles.actionButtonTextContainer}>
+                <Text style={[styles.actionButtonText, styles.dangerButtonText]}>
+                  Sign Out
+                </Text>
+                <Text style={[styles.actionButtonSubtext, styles.dangerButtonText]}>
+                  Log out of your account
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.chevron, styles.dangerButtonText]}>›</Text>
           </TouchableOpacity>
         </View>
 
@@ -203,8 +281,9 @@ const ProfileScreen: React.FC = () => {
   );
 };
 
-const StatItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+const StatItem: React.FC<{ icon: string; label: string; value: string }> = ({ icon, label, value }) => (
   <View style={styles.statItem}>
+    <Text style={styles.statIcon}>{icon}</Text>
     <Text style={styles.statLabel}>{label}</Text>
     <Text style={styles.statValue}>{value}</Text>
   </View>
@@ -254,7 +333,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
-    gap: spacing.lg,
+    gap: spacing.md,
   },
   avatar: {
     width: 100,
@@ -263,6 +342,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
+    ...shadow.md,
   },
   avatarText: {
     fontSize: 56,
@@ -272,6 +352,35 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
+  quickSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.xxl,
+    padding: spacing.lg,
+    marginTop: spacing.md,
+    ...shadow.sm,
+  },
+  summaryItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  summaryValue: {
+    fontSize: fontSize['2xl'],
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  summaryLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.xs / 2,
+  },
+  summaryDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: colors.border,
+  },
   card: {
     backgroundColor: colors.white,
     borderRadius: borderRadius.xxl,
@@ -279,10 +388,17 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     ...shadow.md,
   },
+  cardHeader: {
+    gap: spacing.xs / 2,
+  },
   cardTitle: {
     fontSize: fontSize.xl,
     fontWeight: '700',
     color: colors.text,
+  },
+  cardSubtitle: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -292,10 +408,18 @@ const styles = StyleSheet.create({
   statItem: {
     flex: 1,
     minWidth: '45%',
-    gap: spacing.xs,
+    gap: spacing.xs / 2,
+    alignItems: 'center',
+    padding: spacing.md,
+    backgroundColor: colors.gray50,
+    borderRadius: borderRadius.lg,
+  },
+  statIcon: {
+    fontSize: 32,
+    marginBottom: spacing.xs / 2,
   },
   statLabel: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
   statValue: {
@@ -303,32 +427,49 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
   },
-  goalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  goalContainer: {
+    gap: spacing.lg,
+  },
+  goalBadgeLarge: {
     alignItems: 'center',
-    paddingVertical: spacing.xs,
+    padding: spacing.xl,
+    backgroundColor: colors.primary + '10',
+    borderRadius: borderRadius.xl,
+    gap: spacing.sm,
   },
-  goalLabel: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
+  goalIconLarge: {
+    fontSize: 48,
+  },
+  goalBadgeTextLarge: {
+    fontSize: fontSize['2xl'],
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  goalDescription: {
+    fontSize: fontSize.base,
     color: colors.textSecondary,
+    textAlign: 'center',
   },
-  goalValue: {
+  activityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    padding: spacing.lg,
+    backgroundColor: colors.gray50,
+    borderRadius: borderRadius.lg,
+  },
+  activityIcon: {
+    fontSize: 32,
+  },
+  activityLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs / 2,
+  },
+  activityValue: {
     fontSize: fontSize.lg,
     fontWeight: '700',
     color: colors.text,
-  },
-  goalBadge: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.primary + '20',
-    borderRadius: borderRadius.full,
-  },
-  goalBadgeText: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    color: colors.primary,
   },
   macrosList: {
     gap: spacing.md,
@@ -394,38 +535,82 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontWeight: '600',
   },
+  accountInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    padding: spacing.lg,
+    backgroundColor: colors.gray50,
+    borderRadius: borderRadius.lg,
+  },
+  accountIcon: {
+    fontSize: 32,
+  },
   accountInfo: {
-    gap: spacing.sm,
+    flex: 1,
+    gap: spacing.xs / 2,
   },
   accountLabel: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
   accountValue: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.base,
     fontWeight: '600',
     color: colors.text,
   },
   actionsSection: {
-    gap: spacing.md,
+    gap: spacing.lg,
+  },
+  actionsSectionTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.xs,
   },
   actionButton: {
     backgroundColor: colors.white,
-    paddingVertical: spacing.xl,
-    borderRadius: borderRadius.xxl,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.xl,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: colors.primary,
+    justifyContent: 'space-between',
+    borderWidth: 2,
+    borderColor: colors.border,
     ...shadow.sm,
+  },
+  actionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    flex: 1,
+  },
+  actionButtonIcon: {
+    fontSize: 28,
+  },
+  actionButtonTextContainer: {
+    flex: 1,
+    gap: spacing.xs / 2,
   },
   actionButtonText: {
     fontSize: fontSize.lg,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.text,
+  },
+  actionButtonSubtext: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  chevron: {
+    fontSize: 32,
+    color: colors.textLight,
+    fontWeight: '300',
   },
   dangerButton: {
-    borderColor: colors.error,
-    backgroundColor: colors.error + '10',
+    borderColor: colors.error + '50',
+    backgroundColor: colors.error + '08',
   },
   dangerButtonText: {
     color: colors.error,
