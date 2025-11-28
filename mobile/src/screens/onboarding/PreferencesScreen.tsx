@@ -30,21 +30,16 @@ const PreferencesScreen: React.FC<Props> = ({ navigation }) => {
   const [isPescatarian, setIsPescatarian] = useState(onboardingData.is_pescatarian || false);
   const [isGlutenFree, setIsGlutenFree] = useState(onboardingData.is_gluten_free || false);
   const [isDairyFree, setIsDairyFree] = useState(onboardingData.is_dairy_free || false);
+  const [isHalal, setIsHalal] = useState(onboardingData.is_halal || false);
+  const [isKosher, setIsKosher] = useState(onboardingData.is_kosher || false);
+  const [isHinduNonVeg, setIsHinduNonVeg] = useState(onboardingData.is_hindu_non_veg || false);
   
   const [allergiesInput, setAllergiesInput] = useState(
     onboardingData.allergies?.join(', ') || ''
   );
-  const [dislikesInput, setDislikesInput] = useState(
-    onboardingData.dislikes?.join(', ') || ''
-  );
 
   const handleComplete = () => {
     const allergies = allergiesInput
-      .split(',')
-      .map((item) => item.trim().toLowerCase())
-      .filter((item) => item.length > 0);
-
-    const dislikes = dislikesInput
       .split(',')
       .map((item) => item.trim().toLowerCase())
       .filter((item) => item.length > 0);
@@ -55,8 +50,11 @@ const PreferencesScreen: React.FC<Props> = ({ navigation }) => {
       is_pescatarian: isPescatarian,
       is_gluten_free: isGlutenFree,
       is_dairy_free: isDairyFree,
+      is_halal: isHalal,
+      is_kosher: isKosher,
+      is_hindu_non_veg: isHinduNonVeg,
       allergies,
-      dislikes,
+      dislikes: [],
     });
 
     navigation.navigate('Complete');
@@ -107,6 +105,27 @@ const PreferencesScreen: React.FC<Props> = ({ navigation }) => {
             </View>
 
             <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Religious Dietary Restrictions</Text>
+              <View style={styles.toggleList}>
+                <ToggleOption
+                  label="Halal"
+                  value={isHalal}
+                  onToggle={setIsHalal}
+                />
+                <ToggleOption
+                  label="Kosher"
+                  value={isKosher}
+                  onToggle={setIsKosher}
+                />
+                <ToggleOption
+                  label="Hindu (No Beef)"
+                  value={isHinduNonVeg}
+                  onToggle={setIsHinduNonVeg}
+                />
+              </View>
+            </View>
+
+            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Allergies (Optional)</Text>
               <Text style={styles.inputHint}>Separate with commas</Text>
               <TextInput
@@ -114,20 +133,6 @@ const PreferencesScreen: React.FC<Props> = ({ navigation }) => {
                 value={allergiesInput}
                 onChangeText={setAllergiesInput}
                 placeholder="e.g. peanuts, shellfish, soy"
-                placeholderTextColor={colors.gray400}
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Foods You Dislike (Optional)</Text>
-              <Text style={styles.inputHint}>Separate with commas</Text>
-              <TextInput
-                style={styles.textArea}
-                value={dislikesInput}
-                onChangeText={setDislikesInput}
-                placeholder="e.g. mushrooms, olives, cilantro"
                 placeholderTextColor={colors.gray400}
                 multiline
                 numberOfLines={3}

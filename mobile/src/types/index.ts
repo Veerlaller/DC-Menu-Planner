@@ -24,6 +24,9 @@ export interface UserPreferences {
   is_pescatarian: boolean;
   is_gluten_free: boolean;
   is_dairy_free: boolean;
+  is_halal?: boolean;
+  is_kosher?: boolean;
+  is_hindu_non_veg?: boolean;
   allergies: string[];
   dislikes: string[];
   preferences: string[];
@@ -141,6 +144,9 @@ export interface OnboardingData {
   is_pescatarian?: boolean;
   is_gluten_free?: boolean;
   is_dairy_free?: boolean;
+  is_halal?: boolean;
+  is_kosher?: boolean;
+  is_hindu_non_veg?: boolean;
   allergies?: string[];
   dislikes?: string[];
   preferences?: string[];
