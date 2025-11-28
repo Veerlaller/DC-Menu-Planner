@@ -162,17 +162,17 @@ const CompleteScreen: React.FC<Props> = () => {
             <View style={styles.divider} />
             <View style={styles.macrosGrid}>
               <View style={styles.macroItem}>
-                <Text style={[styles.macroDot, { backgroundColor: colors.protein }]}>•</Text>
+                <View style={[styles.macroBar, { backgroundColor: colors.protein }]} />
                 <Text style={styles.macroName}>Protein</Text>
                 <Text style={styles.macroAmount}>{macros.targetProtein}g</Text>
               </View>
               <View style={styles.macroItem}>
-                <Text style={[styles.macroDot, { backgroundColor: colors.carbs }]}>•</Text>
+                <View style={[styles.macroBar, { backgroundColor: colors.carbs }]} />
                 <Text style={styles.macroName}>Carbs</Text>
                 <Text style={styles.macroAmount}>{macros.targetCarbs}g</Text>
               </View>
               <View style={styles.macroItem}>
-                <Text style={[styles.macroDot, { backgroundColor: colors.fat }]}>•</Text>
+                <View style={[styles.macroBar, { backgroundColor: colors.fat }]} />
                 <Text style={styles.macroName}>Fat</Text>
                 <Text style={styles.macroAmount}>{macros.targetFat}g</Text>
               </View>
@@ -275,10 +275,13 @@ const styles = StyleSheet.create({
   macroItem: {
     flex: 1,
     alignItems: 'center',
-    gap: spacing.xs / 2,
+    gap: spacing.xs,
   },
-  macroDot: {
-    fontSize: 32,
+  macroBar: {
+    width: 40,
+    height: 6,
+    borderRadius: borderRadius.full,
+    marginBottom: spacing.xs / 2,
   },
   macroName: {
     fontSize: fontSize.sm,
