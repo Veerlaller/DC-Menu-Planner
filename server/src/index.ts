@@ -30,7 +30,7 @@ app.use('/', healthRoutes);
 app.use('/', debugRoutes);
 app.use('/api', onboardingRoutes);
 app.use('/api', todayRoutes);
-app.use('/api', menusRoutes);
+app.use('/api/menus', menusRoutes);
 
 /**
  * 404 handler for undefined routes

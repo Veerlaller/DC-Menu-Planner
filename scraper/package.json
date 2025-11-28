@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "scrape": "npm run build && node dist/index.js",
-    "dev": "ts-node index.ts"
+    "dev": "ts-node index.ts",
+    "import": "ts-node import-to-db.ts"
   },
   "keywords": ["ucdavis", "dining", "scraper", "nutrition"],
   "author": "Veer Laller, Kartik Yedumbaka",
