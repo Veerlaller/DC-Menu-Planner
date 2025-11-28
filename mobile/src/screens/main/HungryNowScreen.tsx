@@ -204,14 +204,14 @@ const HungryNowScreen: React.FC = () => {
     }
   };
 
-  const totalCalories = recommendation?.items.reduce(
+  const totalCalories = Math.round((recommendation?.items.reduce(
     (sum, item) => sum + (item.nutrition?.calories || 0),
     0
-  ) || 0;
-  const totalProtein = recommendation?.items.reduce(
+  ) || 0) * 100) / 100;
+  const totalProtein = Math.round((recommendation?.items.reduce(
     (sum, item) => sum + (item.nutrition?.protein_g || 0),
     0
-  ) || 0;
+  ) || 0) * 100) / 100;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -298,12 +298,12 @@ const HungryNowScreen: React.FC = () => {
               <Text style={styles.summaryTitle}>Suggested Meal Totals</Text>
               <View style={styles.summaryRow}>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryValue}>{totalCalories}</Text>
+                  <Text style={styles.summaryValue}>{totalCalories.toFixed(2)}</Text>
                   <Text style={styles.summaryLabel}>calories</Text>
                 </View>
                 <View style={styles.summaryDivider} />
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryValue}>{totalProtein.toFixed(0)}g</Text>
+                  <Text style={styles.summaryValue}>{totalProtein.toFixed(2)}g</Text>
                   <Text style={styles.summaryLabel}>protein</Text>
                 </View>
                 <View style={styles.summaryDivider} />
