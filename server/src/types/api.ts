@@ -81,6 +81,62 @@ export interface TodayResponse {
   remaining: MacroTargets;
 }
 
+// Meal Logging Types
+export interface MealLog {
+  id: string;
+  user_id: string;
+  menu_item_id: string;
+  logged_at: string;
+  eaten_at: string | null;
+  servings: number;
+  notes: string | null;
+  created_at: string;
+  menu_items?: {
+    id: string;
+    name: string;
+    description: string | null;
+    category: string | null;
+    is_vegetarian: boolean;
+    is_vegan: boolean;
+    nutrition_facts: {
+      calories: number | null;
+      protein_g: number | null;
+      carbs_g: number | null;
+      fat_g: number | null;
+      serving_size: string | null;
+    } | null;
+  };
+}
+
+export interface LogMealRequest {
+  menu_item_id: string;
+  servings?: number;
+  eaten_at?: string;
+  notes?: string;
+}
+
+export interface LogMealResponse {
+  success: boolean;
+  meal_log: MealLog;
+}
+
+export interface MealLogsResponse {
+  meal_logs: MealLog[];
+  count: number;
+}
+
+export interface TodayMealsResponse {
+  date: string;
+  meal_logs: MealLog[];
+  totals: {
+    calories: number;
+    protein_g: number;
+    carbs_g: number;
+    fat_g: number;
+  };
+  count: number;
+}
+
 // Error Response
 export interface ErrorResponse {
   error: string;
