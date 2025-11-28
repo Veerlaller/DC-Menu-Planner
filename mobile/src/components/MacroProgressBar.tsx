@@ -10,6 +10,13 @@ interface MacroProgressBarProps {
   color: string;
 }
 
+const getIconForMacro = (label: string): string => {
+  if (label.toLowerCase().includes('protein')) return '💧';
+  if (label.toLowerCase().includes('carb')) return '🌾';
+  if (label.toLowerCase().includes('fat')) return '🥑';
+  return '•';
+};
+
 export const MacroProgressBar: React.FC<MacroProgressBarProps> = ({
   label,
   consumed,
@@ -20,13 +27,19 @@ export const MacroProgressBar: React.FC<MacroProgressBarProps> = ({
   const percentage = target > 0 ? Math.min((consumed / target) * 100, 100) : 0;
   const remaining = Math.max(target - consumed, 0);
   const isOverTarget = consumed > target;
+  const icon = getIconForMacro(label);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.label}>{label}</Text>
+        <View style={styles.labelSection}>
+          <View style={[styles.iconCircle, { backgroundColor: color + '20' }]}>
+            <Text style={styles.icon}>{icon}</Text>
+          </View>
+          <Text style={styles.label}>{label}</Text>
+        </View>
         <Text style={[styles.value, isOverTarget && styles.overTarget]}>
-          {consumed.toFixed(0)}/{target.toFixed(0)} {unit}
+          {consumed.toFixed(0)}g
         </Text>
       </View>
       <View style={styles.barContainer}>
@@ -53,21 +66,36 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  labelSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon: {
+    fontSize: 20,
+  },
   label: {
     fontSize: fontSize.base,
     fontWeight: '600',
     color: colors.text,
   },
   value: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.text,
   },
   overTarget: {
     color: colors.error,
   },
   barContainer: {
-    height: 12,
+    height: 8,
     backgroundColor: colors.gray200,
     borderRadius: borderRadius.full,
     overflow: 'hidden',

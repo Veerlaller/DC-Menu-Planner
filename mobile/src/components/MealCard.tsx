@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MealLogWithItem } from '../types';
-import { colors, spacing, fontSize, borderRadius } from '../constants/theme';
+import { colors, spacing, fontSize, borderRadius, shadow } from '../constants/theme';
 
 interface MealCardProps {
   meal: MealLogWithItem;
@@ -108,11 +108,12 @@ const MacroChip: React.FC<MacroChipProps> = ({ label, value, color }) => (
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.md,
+    ...shadow.md,
   },
   content: {
     flex: 1,
@@ -154,14 +155,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   caloriesValue: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize['3xl'],
     fontWeight: '700',
-    color: colors.primary,
-    lineHeight: 28,
+    color: colors.text,
+    lineHeight: 32,
   },
   caloriesLabel: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
+    fontWeight: '400',
   },
   macros: {
     flexDirection: 'row',
@@ -170,19 +172,19 @@ const styles = StyleSheet.create({
   macroChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs / 2,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs / 2,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1.5,
-    backgroundColor: colors.white,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 0,
+    backgroundColor: colors.gray100,
   },
   macroLabel: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
   macroValue: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.text,
   },

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useStore } from '../../store/useStore';
 import { useAuth } from '../../hooks/useAuth';
-import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
+import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants/theme';
 
 const ProfileScreen: React.FC = () => {
   const { userProfile, userPreferences, reset } = useStore();
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.lg,
-    gap: spacing.lg,
+    gap: spacing.xl,
   },
   emptyState: {
     flex: 1,
@@ -248,189 +248,195 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.lg,
     color: colors.textSecondary,
   },
   header: {
     alignItems: 'center',
-    paddingVertical: spacing.lg,
-    gap: spacing.md,
+    paddingVertical: spacing.xl,
+    gap: spacing.lg,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: colors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    fontSize: 48,
+    fontSize: 56,
   },
   greeting: {
-    fontSize: fontSize['2xl'],
+    fontSize: fontSize['3xl'],
     fontWeight: '700',
     color: colors.text,
   },
   card: {
     backgroundColor: colors.white,
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-    gap: spacing.md,
+    borderRadius: borderRadius.xxl,
+    padding: spacing.xl,
+    gap: spacing.lg,
+    ...shadow.md,
   },
   cardTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontSize: fontSize.xl,
+    fontWeight: '700',
     color: colors.text,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   statItem: {
     flex: 1,
     minWidth: '45%',
-    gap: spacing.xs / 2,
+    gap: spacing.xs,
   },
   statLabel: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.base,
     color: colors.textSecondary,
   },
   statValue: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontSize: fontSize.xl,
+    fontWeight: '700',
     color: colors.text,
   },
   goalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: spacing.xs,
   },
   goalLabel: {
-    fontSize: fontSize.base,
-    fontWeight: '500',
+    fontSize: fontSize.lg,
+    fontWeight: '600',
     color: colors.textSecondary,
   },
   goalValue: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
+    fontSize: fontSize.lg,
+    fontWeight: '700',
     color: colors.text,
   },
   goalBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.primary + '20',
     borderRadius: borderRadius.full,
   },
   goalBadgeText: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
+    fontSize: fontSize.lg,
+    fontWeight: '700',
     color: colors.primary,
   },
   macrosList: {
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   macroRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
   },
   macroLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   macroDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   macroLabelText: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.lg,
     color: colors.text,
+    fontWeight: '600',
   },
   macroValue: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.text,
   },
   preferencesList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   preferencePill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     backgroundColor: colors.secondary + '20',
     borderRadius: borderRadius.full,
   },
   preferencePillText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
+    fontSize: fontSize.base,
+    fontWeight: '600',
     color: colors.text,
   },
   noPreferences: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.lg,
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
   allergySection: {
-    marginTop: spacing.sm,
-    gap: spacing.xs / 2,
+    marginTop: spacing.md,
+    gap: spacing.xs,
   },
   allergyLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
+    fontSize: fontSize.base,
+    fontWeight: '700',
     color: colors.textSecondary,
   },
   allergyText: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.lg,
     color: colors.error,
+    fontWeight: '600',
   },
   accountInfo: {
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   accountLabel: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.base,
     color: colors.textSecondary,
   },
   accountValue: {
-    fontSize: fontSize.base,
-    fontWeight: '500',
-    color: colors.text,
-  },
-  actionsSection: {
-    gap: spacing.sm,
-  },
-  actionButton: {
-    backgroundColor: colors.white,
-    paddingVertical: spacing.lg,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  actionButtonText: {
-    fontSize: fontSize.base,
+    fontSize: fontSize.lg,
     fontWeight: '600',
     color: colors.text,
   },
+  actionsSection: {
+    gap: spacing.md,
+  },
+  actionButton: {
+    backgroundColor: colors.white,
+    paddingVertical: spacing.xl,
+    borderRadius: borderRadius.xxl,
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.primary,
+    ...shadow.sm,
+  },
+  actionButtonText: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.primary,
+  },
   dangerButton: {
     borderColor: colors.error,
+    backgroundColor: colors.error + '10',
   },
   dangerButtonText: {
     color: colors.error,
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: spacing.lg,
-    gap: spacing.xs / 2,
+    paddingVertical: spacing.xl,
+    gap: spacing.xs,
   },
   footerText: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
 });

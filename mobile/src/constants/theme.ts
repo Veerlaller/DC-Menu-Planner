@@ -1,56 +1,56 @@
 // Theme colors and styling constants
 export const colors = {
-  primary: '#2563eb', // Blue
-  primaryDark: '#1e40af',
-  primaryLight: '#60a5fa',
+  primary: '#E87722', // Warm Orange
+  primaryDark: '#D96B1A',
+  primaryLight: '#F59E42',
   
-  secondary: '#10b981', // Green
-  secondaryDark: '#059669',
-  secondaryLight: '#34d399',
+  secondary: '#7BC043', // Lime Green
+  secondaryDark: '#6BA838',
+  secondaryLight: '#84C85C',
   
-  accent: '#f59e0b', // Amber
-  accentDark: '#d97706',
-  accentLight: '#fbbf24',
+  accent: '#F59E42', // Light Orange
+  accentDark: '#E87722',
+  accentLight: '#FFBE76',
   
-  success: '#10b981',
+  success: '#7BC043',
   warning: '#f59e0b',
   error: '#ef4444',
-  info: '#3b82f6',
+  info: '#5B9BF3',
   
   // Neutrals
   white: '#ffffff',
   black: '#000000',
-  gray50: '#f9fafb',
-  gray100: '#f3f4f6',
-  gray200: '#e5e7eb',
-  gray300: '#d1d5db',
-  gray400: '#9ca3af',
-  gray500: '#6b7280',
-  gray600: '#4b5563',
-  gray700: '#374151',
-  gray800: '#1f2937',
-  gray900: '#111827',
+  gray50: '#FDF8F4',
+  gray100: '#F5F5F5',
+  gray200: '#EEEEEE',
+  gray300: '#D9D9D9',
+  gray400: '#B8B8B8',
+  gray500: '#8E8E8E',
+  gray600: '#6B6B6B',
+  gray700: '#4A4A4A',
+  gray800: '#2E2E2E',
+  gray900: '#1A1A1A',
   
   // Backgrounds
   background: '#ffffff',
-  backgroundSecondary: '#f9fafb',
+  backgroundSecondary: '#FDF8F4',
   surface: '#ffffff',
   
   // Text
-  text: '#111827',
-  textSecondary: '#6b7280',
-  textLight: '#9ca3af',
+  text: '#2E2E2E',
+  textSecondary: '#8E8E8E',
+  textLight: '#B8B8B8',
   textInverted: '#ffffff',
   
   // Borders
-  border: '#e5e7eb',
-  borderDark: '#d1d5db',
+  border: '#EEEEEE',
+  borderDark: '#D9D9D9',
   
   // Macros
-  protein: '#ef4444', // Red
-  carbs: '#f59e0b', // Orange
+  protein: '#5B9BF3', // Blue
+  carbs: '#84C85C', // Lime Green
   fat: '#8b5cf6', // Purple
-  calories: '#3b82f6', // Blue
+  calories: '#E87722', // Orange
 };
 
 export const spacing = {
@@ -63,10 +63,11 @@ export const spacing = {
 };
 
 export const borderRadius = {
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 28,
   full: 9999,
 };
 
@@ -91,24 +92,24 @@ export const fontWeight = {
 export const shadow = {
   sm: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   md: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   lg: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    elevation: 6,
   },
 };
 

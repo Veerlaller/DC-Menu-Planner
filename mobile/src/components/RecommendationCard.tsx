@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MenuItemWithNutrition } from '../types';
-import { colors, spacing, fontSize, borderRadius } from '../constants/theme';
+import { colors, spacing, fontSize, borderRadius, shadow } from '../constants/theme';
 
 interface RecommendationCardProps {
   item: MenuItemWithNutrition;
@@ -131,24 +131,25 @@ const MacroPill: React.FC<MacroPillProps> = ({ label, value, color }) => (
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.white,
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.xxl,
     padding: spacing.lg,
     position: 'relative',
+    ...shadow.md,
   },
   rankingBadge: {
     position: 'absolute',
     top: spacing.md,
     right: spacing.md,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.accent,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
   },
   rankingText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.base,
     fontWeight: '700',
     color: colors.white,
   },
@@ -165,10 +166,10 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   name: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontSize: fontSize.xl,
+    fontWeight: '700',
     color: colors.text,
-    lineHeight: 24,
+    lineHeight: 26,
   },
   metaRow: {
     flexDirection: 'row',
@@ -193,26 +194,26 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   indicator: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
   },
   indicatorText: {
-    fontSize: 16,
+    fontSize: 18,
   },
   nutritionSummary: {
     alignItems: 'flex-end',
   },
   caloriesValue: {
-    fontSize: fontSize['3xl'],
+    fontSize: fontSize['4xl'],
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.text,
   },
   caloriesLabel: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
     marginTop: -4,
   },
@@ -225,55 +226,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
   },
   macroDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   macroText: {
     flexDirection: 'row',
     alignItems: 'baseline',
   },
   macroValue: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.base,
     fontWeight: '700',
   },
   macroLabel: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
   reasonSection: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.sm,
-    padding: spacing.md,
-    backgroundColor: colors.primaryLight + '15',
-    borderRadius: borderRadius.md,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
+    padding: spacing.lg,
+    backgroundColor: colors.primary + '10',
+    borderRadius: borderRadius.xl,
+    borderWidth: 2,
+    borderColor: colors.primary + '30',
   },
   reasonIcon: {
-    fontSize: 18,
+    fontSize: 20,
   },
   reasonText: {
     flex: 1,
-    fontSize: fontSize.sm,
+    fontSize: fontSize.base,
     color: colors.text,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   logButton: {
     backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.xl,
     alignItems: 'center',
   },
   logButtonText: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
+    fontSize: fontSize.lg,
+    fontWeight: '700',
     color: colors.white,
   },
 });
