@@ -14,7 +14,7 @@ import { MacroProgressBar } from '../../components/MacroProgressBar';
 import { MealCard } from '../../components/MealCard';
 import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants/theme';
 import { getDailySummary, deleteMealLog, useMockApi } from '../../api';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 const TodayScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -40,9 +40,18 @@ const TodayScreen: React.FC = () => {
     }
   };
 
+  // Load on initial mount
   useEffect(() => {
     loadDailySummary();
   }, []);
+
+  // Refresh data whenever the screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('📱 Today screen focused - refreshing data...');
+      loadDailySummary();
+    }, [])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);

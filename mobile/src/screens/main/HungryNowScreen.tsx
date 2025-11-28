@@ -197,7 +197,7 @@ const HungryNowScreen: React.FC = () => {
       });
       
       console.log('✅ Meal logged successfully!');
-      alert('Meal logged! Check the Today tab to see your progress.');
+      alert(`✅ ${item.name} logged!\n\nSwitch to the Today tab to see your updated progress.`);
     } catch (error) {
       console.error('❌ Failed to log meal:', error);
       alert('Failed to log meal. Please try again.');
