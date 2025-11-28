@@ -314,6 +314,51 @@ export class SupabaseStorage {
   }
 
   /**
+   * Clear all menu data from the database
+   */
+  async clearAllMenuItems(): Promise<void> {
+    console.log(`\n🗑️  Clearing all existing menu data...`);
+    
+    // Get all menu_days
+    const { data: menuDays, error: selectError } = await this.supabase
+      .from('menu_days')
+      .select('id');
+
+    if (selectError) {
+      throw new Error(`Failed to query menu_days: ${selectError.message}`);
+    }
+
+    if (!menuDays || menuDays.length === 0) {
+      console.log('  No existing data to clear');
+      return;
+    }
+
+    const menuDayIds = menuDays.map(md => md.id);
+
+    // Delete menu_items (nutrition_facts will cascade)
+    const { error: deleteItemsError } = await this.supabase
+      .from('menu_items')
+      .delete()
+      .in('menu_day_id', menuDayIds);
+
+    if (deleteItemsError) {
+      throw new Error(`Failed to delete menu_items: ${deleteItemsError.message}`);
+    }
+
+    // Delete menu_days
+    const { error: deleteDaysError } = await this.supabase
+      .from('menu_days')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+
+    if (deleteDaysError) {
+      throw new Error(`Failed to delete menu_days: ${deleteDaysError.message}`);
+    }
+
+    console.log(`  ✓ Cleared all menu data (${menuDays.length} menu day(s))`);
+  }
+
+  /**
    * Clear menu data for a specific date (useful for re-scraping)
    */
   async clearMenuForDate(date: Date): Promise<void> {

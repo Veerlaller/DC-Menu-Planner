@@ -63,7 +63,10 @@ Environment Variables (required for database storage):
       }
       console.log('✓ Connected to Supabase\n');
       
-      // Clear existing data if requested
+      // Always clear all existing menu data before scraping
+      await storage.clearAllMenuItems();
+      
+      // Clear existing data for specific date if requested (legacy support)
       if (clearArg) {
         await storage.clearMenuForDate(date);
       }
