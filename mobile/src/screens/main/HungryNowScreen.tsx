@@ -446,18 +446,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   recommendationCard: {
-    backgroundColor: colors.primary + '15',
+    backgroundColor: colors.white,
     borderRadius: borderRadius.xxl,
     padding: spacing.xl,
-    borderWidth: 3,
-    borderColor: colors.primary,
+    borderWidth: 2,
+    borderColor: colors.secondary,
     gap: spacing.lg,
     ...shadow.lg,
   },
   recommendationLabel: {
     fontSize: fontSize.base,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.secondary,
     textTransform: 'uppercase',
   },
   hallInfo: {
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: fontSize.lg,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.textSecondary,
   },
   summaryRow: {
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: fontSize['3xl'],
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.text,
   },
   summaryLabel: {
     fontSize: fontSize.base,
@@ -555,8 +555,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
-    borderWidth: 3,
-    borderColor: colors.primary,
+    borderWidth: 2,
+    borderColor: colors.gray300,
     ...shadow.sm,
   },
   secondaryButtonIcon: {
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: fontSize.lg,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.text,
   },
   infoCard: {
     backgroundColor: colors.gray50,
@@ -622,14 +622,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xxl,
     borderRadius: borderRadius.xl,
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: colors.gray300,
     marginTop: spacing.md,
     minWidth: 180,
   },
   retryButtonText: {
     fontSize: fontSize.lg,
     fontWeight: '700',
-    color: colors.primary,
+    color: colors.text,
     textAlign: 'center',
   },
 });
