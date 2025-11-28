@@ -6,6 +6,7 @@ import debugRoutes from './routes/debug.js';
 import onboardingRoutes from './routes/onboarding.js';
 import todayRoutes from './routes/today.js';
 import menusRoutes from './routes/menus.js';
+import recommendationsRoutes from './routes/recommendations.js';
 
 // Load environment variables
 dotenv.config();
@@ -31,6 +32,7 @@ app.use('/', debugRoutes);
 app.use('/api', onboardingRoutes);
 app.use('/api', todayRoutes);
 app.use('/api', menusRoutes);
+app.use('/api', recommendationsRoutes);
 
 /**
  * 404 handler for undefined routes
