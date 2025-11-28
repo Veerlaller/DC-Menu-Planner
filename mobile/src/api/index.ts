@@ -137,32 +137,72 @@ export const checkUserProfile = async (): Promise<{
 
 export const getDailySummary = async (date?: string): Promise<DailySummary> => {
   const dateParam = date || new Date().toISOString().split('T')[0];
-  const response = await apiClient.get<any>('/today');
+  
+  // Get both today's data and meal logs
+  const [todayResponse, mealsResponse] = await Promise.all([
+    apiClient.get<any>('/today'),
+    apiClient.get<any>('/meals/today')
+  ]);
+  
+  // Transform meal logs to match our type
+  const meals_logged = (mealsResponse.data.meal_logs || []).map((log: any) => ({
+    id: log.id,
+    user_id: log.user_id,
+    menu_item_id: log.menu_item_id,
+    logged_at: log.logged_at,
+    eaten_at: log.eaten_at,
+    servings: log.servings,
+    notes: log.notes,
+    menu_item: {
+      id: log.menu_items?.id,
+      menu_day_id: '',
+      name: log.menu_items?.name || 'Unknown',
+      description: log.menu_items?.description,
+      category: log.menu_items?.category,
+      station: '',
+      is_vegetarian: log.menu_items?.is_vegetarian || false,
+      is_vegan: log.menu_items?.is_vegan || false,
+      contains_gluten: false,
+      contains_dairy: false,
+      contains_nuts: false,
+      allergen_info: [],
+      nutrition: log.menu_items?.nutrition_facts ? {
+        id: '',
+        menu_item_id: log.menu_items?.id,
+        calories: log.menu_items?.nutrition_facts.calories,
+        protein_g: log.menu_items?.nutrition_facts.protein_g,
+        carbs_g: log.menu_items?.nutrition_facts.carbs_g,
+        fat_g: log.menu_items?.nutrition_facts.fat_g,
+        serving_size: log.menu_items?.nutrition_facts.serving_size,
+      } : undefined,
+    },
+  }));
   
   // Transform backend response to match our DailySummary type
   return {
-    date: response.data.date,
-    consumed_calories: response.data.consumed.calories,
-    consumed_protein: response.data.consumed.protein_g,
-    consumed_carbs: response.data.consumed.carbs_g,
-    consumed_fat: response.data.consumed.fat_g,
-    target_calories: response.data.targets.calories,
-    target_protein: response.data.targets.protein_g,
-    target_carbs: response.data.targets.carbs_g,
-    target_fat: response.data.targets.fat_g,
-    meals_logged: [], // TODO: Add meal logs endpoint
+    date: todayResponse.data.date,
+    consumed_calories: todayResponse.data.consumed.calories,
+    consumed_protein: todayResponse.data.consumed.protein_g,
+    consumed_carbs: todayResponse.data.consumed.carbs_g,
+    consumed_fat: todayResponse.data.consumed.fat_g,
+    target_calories: todayResponse.data.targets.calories,
+    target_protein: todayResponse.data.targets.protein_g,
+    target_carbs: todayResponse.data.targets.carbs_g,
+    target_fat: todayResponse.data.targets.fat_g,
+    meals_logged,
   };
 };
 
 export const logMeal = async (
   mealData: Partial<MealLog>
 ): Promise<MealLog> => {
-  const response = await apiClient.post<ApiResponse<MealLog>>(
+  const response = await apiClient.post<any>(
     '/meals/log',
     mealData
   );
-  if (response.data.success && response.data.data) {
-    return response.data.data;
+  // Server returns { success: true, meal_log: ... }
+  if (response.data.success && response.data.meal_log) {
+    return response.data.meal_log;
   }
   throw new Error(response.data.error || 'Failed to log meal');
 };
@@ -180,9 +220,10 @@ export const getMealLogs = async (date?: string): Promise<MealLog[]> => {
 };
 
 export const deleteMealLog = async (mealLogId: string): Promise<void> => {
-  const response = await apiClient.delete<ApiResponse<void>>(
-    `/meals/logs/${mealLogId}`
+  const response = await apiClient.delete<any>(
+    `/meals/log/${mealLogId}`
   );
+  // Server returns { success: true, message: ... }
   if (!response.data.success) {
     throw new Error(response.data.error || 'Failed to delete meal log');
   }
@@ -209,19 +250,24 @@ export const getAvailableMenus = async (date?: string): Promise<MenuItemWithNutr
     }
     
     // Otherwise, try the next 7 days to find available menus
+    console.log(`📅 No menu for ${today}, searching next 7 days...`);
     for (let i = 1; i <= 7; i++) {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + i);
       const dateStr = futureDate.toISOString().split('T')[0];
       
-      const response = await apiClient.get<ApiResponse<MenuItemWithNutrition[]>>(
-        '/menus/available',
-        { params: { date: dateStr } }
-      );
-      
-      if (response.data.success && response.data.data && response.data.data.length > 0) {
-        console.log(`📅 No menu for today, showing menu for ${dateStr}`);
-        return response.data.data;
+      try {
+        const response = await apiClient.get<ApiResponse<MenuItemWithNutrition[]>>(
+          '/menus/available',
+          { params: { date: dateStr } }
+        );
+        
+        if (response.data.success && response.data.data && response.data.data.length > 0) {
+          console.log(`📅 Found menu data for ${dateStr} (${response.data.data.length} items)`);
+          return response.data.data;
+        }
+      } catch (error) {
+        console.log(`   Day +${i} (${dateStr}): No data`);
       }
     }
     

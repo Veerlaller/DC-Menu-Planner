@@ -32,7 +32,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
       )}
 
       <View style={styles.content}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingRight: ranking ? 40 : 0 }]}>
           <View style={styles.info}>
             <Text style={styles.name}>{item.name}</Text>
             
@@ -159,7 +159,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingRight: ranking ? 40 : 0, // Make room for ranking badge
   },
   info: {
     flex: 1,

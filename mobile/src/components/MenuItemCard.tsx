@@ -39,7 +39,9 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
             )}
             {item.meal_type && (
               <>
-                <Text style={styles.dot}>•</Text>
+                {(item.station || (showDiningHall && item.dining_hall)) && (
+                  <Text style={styles.dot}>•</Text>
+                )}
                 <Text style={styles.mealType}>
                   {item.meal_type.charAt(0).toUpperCase() + item.meal_type.slice(1)}
                 </Text>

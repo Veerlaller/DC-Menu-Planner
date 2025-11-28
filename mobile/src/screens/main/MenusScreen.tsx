@@ -37,26 +37,26 @@ const MenusScreen: React.FC = () => {
       const menus = await getAvailableMenus();
       setAvailableMenus(menus);
       
+      console.log('📋 Loaded menus:', menus.length);
+      if (menus.length > 0) {
+        console.log('🏢 Sample dining halls:', menus.slice(0, 5).map(m => ({
+          name: m.name,
+          hall: m.dining_hall?.short_name,
+          meal: m.meal_type,
+        })));
+      } else {
+        console.warn('⚠️ No menus loaded! Check if backend has menu data.');
+      }
+      
       // Extract date from first menu item
       if (menus.length > 0 && menus[0].date) {
         setMenuDate(menus[0].date);
       }
 
-      // Set initial hall and meal filters if not set
-      if (!selectedHall && menus.length > 0) {
-        const halls = [...new Set(menus.map(m => m.dining_hall?.short_name).filter(Boolean))];
-        if (halls.length > 0) {
-          setSelectedHall(halls[0] as string);
-        }
-      }
-      if (!selectedMeal && menus.length > 0) {
-        const meals = [...new Set(menus.map(m => m.meal_type).filter(Boolean))];
-        if (meals.length > 0) {
-          setSelectedMeal(meals[0] as string);
-        }
-      }
+      // DON'T auto-select hall or meal - let user choose
+      // This was causing confusion
     } catch (error) {
-      console.error('Failed to load menus:', error);
+      console.error('❌ Failed to load menus:', error);
     } finally {
       setIsLoading(false);
     }
@@ -72,9 +72,30 @@ const MenusScreen: React.FC = () => {
     loadMenus();
   }, []);
 
+  useEffect(() => {
+    console.log('🔍 Filters changed:', {
+      selectedHall,
+      selectedMeal,
+      totalMenus: availableMenus.length,
+      filteredMenus: filteredMenus.length,
+    });
+  }, [selectedHall, selectedMeal, availableMenus]);
+
   // Get unique halls and meals
-  const availableHalls = [...new Set(availableMenus.map(m => m.dining_hall?.short_name).filter(Boolean))];
-  const availableMeals = [...new Set(availableMenus.map(m => m.meal_type).filter(Boolean))];
+  const availableHalls = [...new Set(
+    availableMenus
+      .map(m => m.dining_hall?.short_name)
+      .filter(hall => hall && typeof hall === 'string' && hall.length > 0)
+  )];
+  const availableMeals = [...new Set(
+    availableMenus
+      .map(m => m.meal_type)
+      .filter(meal => meal && typeof meal === 'string' && meal.length > 0)
+  )];
+
+  console.log('🏢 Available halls:', availableHalls);
+  console.log('🍽️ Available meals:', availableMeals);
+  console.log('📊 Total menus:', availableMenus.length);
 
   // Filter menus
   const filteredMenus = availableMenus.filter((item) => {
@@ -84,7 +105,7 @@ const MenusScreen: React.FC = () => {
     }
 
     // Meal filter
-    if (selectedMeal && item.meal_type !== selectedMeal.toLowerCase()) {
+    if (selectedMeal && item.meal_type !== selectedMeal) {
       return false;
     }
 
@@ -112,12 +133,21 @@ const MenusScreen: React.FC = () => {
 
   const handleLogMeal = async (item: MenuItemWithNutrition) => {
     try {
-      // TODO: Show modal for servings and notes
-      console.log('Log meal:', item.name);
-      // const userId = await supabase.auth.getUser().then(r => r.data.user?.id);
-      // await logMeal(userId, { menu_item_id: item.id, servings: 1 });
+      console.log('🍽️ Logging meal:', item.name);
+      
+      // TODO: In the future, show a modal to let user customize servings and notes
+      // For now, log with default 1 serving
+      await logMeal({
+        menu_item_id: item.id,
+        servings: 1,
+        eaten_at: new Date().toISOString(),
+      });
+      
+      console.log('✅ Meal logged successfully!');
+      alert('Meal logged! Check the Today tab to see your progress.');
     } catch (error) {
-      console.error('Failed to log meal:', error);
+      console.error('❌ Failed to log meal:', error);
+      alert('Failed to log meal. Please try again.');
     }
   };
 
@@ -203,68 +233,89 @@ const MenusScreen: React.FC = () => {
         {/* Dining Hall Selector */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Dining Hall</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.hallsScroll}
-          >
-            <TouchableOpacity
-              style={[styles.hallChip, selectedHall === null && styles.hallChipActive]}
-              onPress={() => setSelectedHall(null)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.hallText, selectedHall === null && styles.hallTextActive]}>
-                All Halls
+          {availableHalls.length === 0 && !isLoading ? (
+            <View style={styles.noDataHint}>
+              <Text style={styles.noDataText}>
+                No dining halls available. Menu data may not be loaded yet.
               </Text>
-            </TouchableOpacity>
-            {availableHalls.map((hall) => (
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hallsScroll}
+            >
               <TouchableOpacity
-                key={hall}
-                style={[styles.hallChip, selectedHall === hall && styles.hallChipActive]}
-                onPress={() => setSelectedHall(hall)}
+                style={[styles.hallChip, selectedHall === null && styles.hallChipActive]}
+                onPress={() => setSelectedHall(null)}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.hallText, selectedHall === hall && styles.hallTextActive]}>
-                  {hall}
+                <Text style={[styles.hallText, selectedHall === null && styles.hallTextActive]}>
+                  All Halls
                 </Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+              {availableHalls.map((hall) => {
+                if (!hall || typeof hall !== 'string' || hall.length === 0) return null;
+                return (
+                  <TouchableOpacity
+                    key={hall}
+                    style={[styles.hallChip, selectedHall === hall && styles.hallChipActive]}
+                    onPress={() => {
+                      console.log('🏢 Selected hall:', hall);
+                      setSelectedHall(hall);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.hallText, selectedHall === hall && styles.hallTextActive]}>
+                      {hall}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
 
         {/* Meal Type Selector */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Meal</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.mealButtons}
-          >
-            <TouchableOpacity
-              style={[styles.mealButton, selectedMeal === null && styles.mealButtonActive]}
-              onPress={() => setSelectedMeal(null)}
-              activeOpacity={0.7}
+          {availableMeals.length === 0 && !isLoading ? (
+            <View style={styles.noDataHint}>
+              <Text style={styles.noDataText}>No meal types available</Text>
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.mealButtons}
             >
-              <Text style={[styles.mealText, selectedMeal === null && styles.mealTextActive]}>
-                All Meals
-              </Text>
-            </TouchableOpacity>
-            {availableMeals.map((meal) => {
-              const displayMeal = meal.charAt(0).toUpperCase() + meal.slice(1);
-              return (
-                <TouchableOpacity
-                  key={meal}
-                  style={[styles.mealButton, selectedMeal === meal && styles.mealButtonActive]}
-                  onPress={() => setSelectedMeal(meal)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.mealText, selectedMeal === meal && styles.mealTextActive]}>
-                    {displayMeal}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+              <TouchableOpacity
+                style={[styles.mealButton, selectedMeal === null && styles.mealButtonActive]}
+                onPress={() => setSelectedMeal(null)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.mealText, selectedMeal === null && styles.mealTextActive]}>
+                  All Meals
+                </Text>
+              </TouchableOpacity>
+              {availableMeals.map((meal) => {
+                if (!meal || typeof meal !== 'string' || meal.length === 0) return null;
+                const displayMeal = meal.charAt(0).toUpperCase() + meal.slice(1);
+                return (
+                  <TouchableOpacity
+                    key={meal}
+                    style={[styles.mealButton, selectedMeal === meal && styles.mealButtonActive]}
+                    onPress={() => setSelectedMeal(meal)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.mealText, selectedMeal === meal && styles.mealTextActive]}>
+                      {displayMeal}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
 
         {/* Menu Items */}
@@ -522,6 +573,18 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     marginBottom: spacing.sm,
+  },
+  noDataHint: {
+    padding: spacing.md,
+    backgroundColor: colors.gray100,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  noDataText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 

@@ -218,7 +218,8 @@ router.get('/item/:id', async (req: Request, res: Response) => {
 
     // Transform the data
     const menuDay = Array.isArray(menuItem.menu_days) ? menuItem.menu_days[0] : menuItem.menu_days;
-    const diningHall = menuDay?.dining_halls;
+    const diningHallRaw = menuDay?.dining_halls;
+    const diningHall = Array.isArray(diningHallRaw) ? diningHallRaw[0] : diningHallRaw;
     const nutrition = Array.isArray(menuItem.nutrition_facts) ? menuItem.nutrition_facts[0] : menuItem.nutrition_facts;
 
     const transformedItem = {

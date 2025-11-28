@@ -12,7 +12,7 @@ import { useStore } from '../../store/useStore';
 import { MenuItemWithNutrition, DiningHall, MealType } from '../../types';
 import { RecommendationCard } from '../../components/RecommendationCard';
 import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants/theme';
-import { getAvailableMenus } from '../../api';
+import { getAvailableMenus, logMeal } from '../../api';
 import { useAuth } from '../../hooks/useAuth';
 
 interface RecommendationData {
@@ -186,6 +186,24 @@ const HungryNowScreen: React.FC = () => {
     }
   };
 
+  const handleLogMeal = async (item: MenuItemWithNutrition) => {
+    try {
+      console.log('🍽️ Logging meal:', item.name);
+      
+      await logMeal({
+        menu_item_id: item.id,
+        servings: 1,
+        eaten_at: new Date().toISOString(),
+      });
+      
+      console.log('✅ Meal logged successfully!');
+      alert('Meal logged! Check the Today tab to see your progress.');
+    } catch (error) {
+      console.error('❌ Failed to log meal:', error);
+      alert('Failed to log meal. Please try again.');
+    }
+  };
+
   const totalCalories = recommendation?.items.reduce(
     (sum, item) => sum + (item.nutrition?.calories || 0),
     0
@@ -309,7 +327,7 @@ const HungryNowScreen: React.FC = () => {
                       ? `Best match for your ${userProfile?.goal || 'fitness'} goals`
                       : undefined
                   }
-                  onLog={() => console.log('Log meal:', item.id)}
+                  onLog={() => handleLogMeal(item)}
                 />
               ))}
             </View>

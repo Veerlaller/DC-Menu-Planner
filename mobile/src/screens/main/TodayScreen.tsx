@@ -13,7 +13,7 @@ import { useStore } from '../../store/useStore';
 import { MacroProgressBar } from '../../components/MacroProgressBar';
 import { MealCard } from '../../components/MealCard';
 import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants/theme';
-import { getDailySummary, useMockApi } from '../../api';
+import { getDailySummary, deleteMealLog, useMockApi } from '../../api';
 import { useNavigation } from '@react-navigation/native';
 
 const TodayScreen: React.FC = () => {
@@ -48,6 +48,20 @@ const TodayScreen: React.FC = () => {
     setRefreshing(true);
     await loadDailySummary();
     setRefreshing(false);
+  };
+
+  const handleDeleteMeal = async (mealLogId: string) => {
+    try {
+      console.log('🗑️ Deleting meal log:', mealLogId);
+      await deleteMealLog(mealLogId);
+      console.log('✅ Meal deleted successfully!');
+      
+      // Refresh the daily summary
+      await loadDailySummary();
+    } catch (error) {
+      console.error('❌ Failed to delete meal:', error);
+      alert('Failed to delete meal. Please try again.');
+    }
   };
 
   if (!userProfile || !dailySummary) {
@@ -187,10 +201,7 @@ const TodayScreen: React.FC = () => {
                     // TODO: Navigate to meal detail screen
                     console.log('Meal pressed:', meal.id);
                   }}
-                  onDelete={() => {
-                    // TODO: Implement delete meal
-                    console.log('Delete meal:', meal.id);
-                  }}
+                  onDelete={() => handleDeleteMeal(meal.id)}
                 />
               ))}
             </View>

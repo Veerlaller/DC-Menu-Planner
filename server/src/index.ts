@@ -32,7 +32,7 @@ app.use('/', healthRoutes);
 app.use('/', debugRoutes);
 app.use('/api', onboardingRoutes);
 app.use('/api', todayRoutes);
-app.use('/api', menusRoutes);
+app.use('/api/menus', menusRoutes);
 app.use('/api', recommendationsRoutes);
 app.use('/api/meals', mealsRoutes);
 

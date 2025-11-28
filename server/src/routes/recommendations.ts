@@ -196,7 +196,7 @@ router.get('/recommendations/now', requireUserId, async (req: Request, res: Resp
 router.get('/recommendations/meal/:meal_period', requireUserId, async (req: Request, res: Response) => {
   try {
     const userId = getUserId(req);
-    const mealPeriod = req.params.meal_period.toLowerCase();
+    const mealPeriod = req.params.meal_period?.toLowerCase() || 'lunch';
     const limitParam = req.query.limit as string;
     const dateParam = req.query.date as string;
     const limit = limitParam ? parseInt(limitParam, 10) : 5;
@@ -332,7 +332,7 @@ router.get('/recommendations/meal/:meal_period', requireUserId, async (req: Requ
       remaining,
       preferences,
       itemsWithNutrition,
-      new Date(date),
+      new Date(date || new Date().toISOString().split('T')[0]),
       limit
     );
 
