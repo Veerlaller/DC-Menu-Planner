@@ -5,7 +5,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { colors, fontSize } from '../constants/theme';
 
 // Import screens
-import TodayScreen from '../screens/main/TodayScreen';
+import HomeScreen from '../screens/main/HomeScreen';
 import MenusScreen from '../screens/main/MenusScreen';
 import HungryNowScreen from '../screens/main/HungryNowScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
@@ -30,7 +30,7 @@ const HomeStack = createStackNavigator<HomeStackParamList>();
 const HomeStackNavigator: React.FC = () => {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
-      <HomeStack.Screen name="Home" component={TodayScreen} />
+      <HomeStack.Screen name="Home" component={HomeScreen} />
       <HomeStack.Screen name="WeeklyStats" component={WeeklyStatsScreen} />
     </HomeStack.Navigator>
   );

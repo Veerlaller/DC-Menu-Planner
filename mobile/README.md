@@ -92,7 +92,7 @@ mobile/
 │   │   │   ├── PreferencesScreen.tsx
 │   │   │   └── CompleteScreen.tsx
 │   │   └── main/
-│   │       ├── TodayScreen.tsx
+│   │       ├── HomeScreen.tsx
 │   │       ├── MenusScreen.tsx
 │   │       ├── HungryNowScreen.tsx
 │   │       └── ProfileScreen.tsx

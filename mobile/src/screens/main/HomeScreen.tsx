@@ -16,7 +16,7 @@ import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants
 import { getDailySummary, deleteMealLog, useMockApi } from '../../api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-const TodayScreen: React.FC = () => {
+const HomeScreen: React.FC = () => {
   const navigation = useNavigation();
   const { userProfile, dailySummary, setDailySummary, setIsLoading, isLoading } = useStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -173,9 +173,7 @@ const TodayScreen: React.FC = () => {
               unit="g"
               color={colors.protein}
             />
-          </View>
-
-          <View style={styles.macrosCard}>
+            <View style={styles.macroDivider} />
             <MacroProgressBar
               label="Carbohydrates"
               consumed={dailySummary.consumed_carbs}
@@ -183,9 +181,7 @@ const TodayScreen: React.FC = () => {
               unit="g"
               color={colors.carbs}
             />
-          </View>
-
-          <View style={styles.macrosCard}>
+            <View style={styles.macroDivider} />
             <MacroProgressBar
               label="Fat"
               consumed={dailySummary.consumed_fat}
@@ -229,6 +225,9 @@ const TodayScreen: React.FC = () => {
             </View>
           )}
         </View>
+
+        {/* Separator */}
+        <View style={styles.sectionDivider} />
 
         {/* Quick Actions */}
         <View style={styles.actionsSection}>
@@ -358,6 +357,11 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     ...shadow.md,
   },
+  macroDivider: {
+    height: 1,
+    backgroundColor: colors.gray200,
+    marginVertical: spacing.md,
+  },
   mealsSection: {
     gap: spacing.md,
   },
@@ -393,6 +397,11 @@ const styles = StyleSheet.create({
   },
   mealsList: {
     gap: spacing.md,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: colors.gray200,
+    marginVertical: spacing.lg,
   },
   logMealButton: {
     backgroundColor: colors.primary,
@@ -437,5 +446,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TodayScreen;
+export default HomeScreen;
 
