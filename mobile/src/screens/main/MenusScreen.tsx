@@ -7,20 +7,29 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
+  RefreshControl,
 } from 'react-native';
 import { useStore } from '../../store/useStore';
 import { MenuItemWithNutrition } from '../../types';
-import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
-import { getAvailableMenus } from '../../api';
-
-const DINING_HALLS = ['Latitude', 'Cuarto', 'Segundo', 'Tercero'];
-const MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner'];
+import { MenuItemCard } from '../../components/MenuItemCard';
+import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants/theme';
+import { getAvailableMenus, logMeal } from '../../api';
 
 const MenusScreen: React.FC = () => {
-  const { availableMenus, setAvailableMenus, setIsLoading, isLoading } = useStore();
-  const [selectedHall, setSelectedHall] = useState('Latitude');
-  const [selectedMeal, setSelectedMeal] = useState('Lunch');
+  const { availableMenus, setAvailableMenus, setIsLoading, isLoading, userPreferences } = useStore();
+  const [selectedHall, setSelectedHall] = useState<string | null>(null);
+  const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showDietaryFilters, setShowDietaryFilters] = useState(false);
+  const [dietaryFilters, setDietaryFilters] = useState({
+    vegetarian: false,
+    vegan: false,
+    glutenFree: false,
+    dairyFree: false,
+  });
   const [menuDate, setMenuDate] = useState<string>('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadMenus = async () => {
     try {
@@ -32,6 +41,20 @@ const MenusScreen: React.FC = () => {
       if (menus.length > 0 && menus[0].date) {
         setMenuDate(menus[0].date);
       }
+
+      // Set initial hall and meal filters if not set
+      if (!selectedHall && menus.length > 0) {
+        const halls = [...new Set(menus.map(m => m.dining_hall?.short_name).filter(Boolean))];
+        if (halls.length > 0) {
+          setSelectedHall(halls[0] as string);
+        }
+      }
+      if (!selectedMeal && menus.length > 0) {
+        const meals = [...new Set(menus.map(m => m.meal_type).filter(Boolean))];
+        if (meals.length > 0) {
+          setSelectedMeal(meals[0] as string);
+        }
+      }
     } catch (error) {
       console.error('Failed to load menus:', error);
     } finally {
@@ -39,15 +62,64 @@ const MenusScreen: React.FC = () => {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadMenus();
+    setRefreshing(false);
+  };
+
   useEffect(() => {
     loadMenus();
   }, []);
 
-  const filteredMenus = availableMenus.filter(
-    (item) =>
-      item.dining_hall?.short_name === selectedHall &&
-      item.meal_type === selectedMeal.toLowerCase()
-  );
+  // Get unique halls and meals
+  const availableHalls = [...new Set(availableMenus.map(m => m.dining_hall?.short_name).filter(Boolean))];
+  const availableMeals = [...new Set(availableMenus.map(m => m.meal_type).filter(Boolean))];
+
+  // Filter menus
+  const filteredMenus = availableMenus.filter((item) => {
+    // Hall filter
+    if (selectedHall && item.dining_hall?.short_name !== selectedHall) {
+      return false;
+    }
+
+    // Meal filter
+    if (selectedMeal && item.meal_type !== selectedMeal.toLowerCase()) {
+      return false;
+    }
+
+    // Search filter
+    if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+
+    // Dietary filters
+    if (dietaryFilters.vegetarian && !item.is_vegetarian) {
+      return false;
+    }
+    if (dietaryFilters.vegan && !item.is_vegan) {
+      return false;
+    }
+    if (dietaryFilters.glutenFree && item.contains_gluten) {
+      return false;
+    }
+    if (dietaryFilters.dairyFree && item.contains_dairy) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const handleLogMeal = async (item: MenuItemWithNutrition) => {
+    try {
+      // TODO: Show modal for servings and notes
+      console.log('Log meal:', item.name);
+      // const userId = await supabase.auth.getUser().then(r => r.data.user?.id);
+      // await logMeal(userId, { menu_item_id: item.id, servings: 1 });
+    } catch (error) {
+      console.error('Failed to log meal:', error);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -56,12 +128,75 @@ const MenusScreen: React.FC = () => {
         {menuDate && (
           <View style={styles.dateHeader}>
             <Text style={styles.dateText}>
-              📅 Menu for {new Date(menuDate + 'T12:00:00').toLocaleDateString('en-US', { 
+              📅 {new Date(menuDate + 'T12:00:00').toLocaleDateString('en-US', { 
                 weekday: 'long',
                 month: 'long', 
                 day: 'numeric' 
               })}
             </Text>
+          </View>
+        )}
+
+        {/* Search Bar */}
+        <View style={styles.searchSection}>
+          <View style={styles.searchBar}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search menu items..."
+              placeholderTextColor={colors.textLight}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Text style={styles.clearIcon}>×</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity
+            style={[styles.filterButton, showDietaryFilters && styles.filterButtonActive]}
+            onPress={() => setShowDietaryFilters(!showDietaryFilters)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.filterIcon}>⚙️</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Dietary Filters */}
+        {showDietaryFilters && (
+          <View style={styles.dietaryFiltersSection}>
+            <Text style={styles.sectionLabel}>Dietary Preferences</Text>
+            <View style={styles.filterChips}>
+              <FilterChip
+                label="Vegetarian"
+                active={dietaryFilters.vegetarian}
+                onPress={() =>
+                  setDietaryFilters({ ...dietaryFilters, vegetarian: !dietaryFilters.vegetarian })
+                }
+              />
+              <FilterChip
+                label="Vegan"
+                active={dietaryFilters.vegan}
+                onPress={() =>
+                  setDietaryFilters({ ...dietaryFilters, vegan: !dietaryFilters.vegan })
+                }
+              />
+              <FilterChip
+                label="Gluten Free"
+                active={dietaryFilters.glutenFree}
+                onPress={() =>
+                  setDietaryFilters({ ...dietaryFilters, glutenFree: !dietaryFilters.glutenFree })
+                }
+              />
+              <FilterChip
+                label="Dairy Free"
+                active={dietaryFilters.dairyFree}
+                onPress={() =>
+                  setDietaryFilters({ ...dietaryFilters, dairyFree: !dietaryFilters.dairyFree })
+                }
+              />
+            </View>
           </View>
         )}
         
@@ -73,7 +208,16 @@ const MenusScreen: React.FC = () => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.hallsScroll}
           >
-            {DINING_HALLS.map((hall) => (
+            <TouchableOpacity
+              style={[styles.hallChip, selectedHall === null && styles.hallChipActive]}
+              onPress={() => setSelectedHall(null)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.hallText, selectedHall === null && styles.hallTextActive]}>
+                All Halls
+              </Text>
+            </TouchableOpacity>
+            {availableHalls.map((hall) => (
               <TouchableOpacity
                 key={hall}
                 style={[styles.hallChip, selectedHall === hall && styles.hallChipActive]}
@@ -91,24 +235,46 @@ const MenusScreen: React.FC = () => {
         {/* Meal Type Selector */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Meal</Text>
-          <View style={styles.mealButtons}>
-            {MEAL_TYPES.map((meal) => (
-              <TouchableOpacity
-                key={meal}
-                style={[styles.mealButton, selectedMeal === meal && styles.mealButtonActive]}
-                onPress={() => setSelectedMeal(meal)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.mealText, selectedMeal === meal && styles.mealTextActive]}>
-                  {meal}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.mealButtons}
+          >
+            <TouchableOpacity
+              style={[styles.mealButton, selectedMeal === null && styles.mealButtonActive]}
+              onPress={() => setSelectedMeal(null)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.mealText, selectedMeal === null && styles.mealTextActive]}>
+                All Meals
+              </Text>
+            </TouchableOpacity>
+            {availableMeals.map((meal) => {
+              const displayMeal = meal.charAt(0).toUpperCase() + meal.slice(1);
+              return (
+                <TouchableOpacity
+                  key={meal}
+                  style={[styles.mealButton, selectedMeal === meal && styles.mealButtonActive]}
+                  onPress={() => setSelectedMeal(meal)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.mealText, selectedMeal === meal && styles.mealTextActive]}>
+                    {displayMeal}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
 
         {/* Menu Items */}
-        <ScrollView style={styles.menuList} contentContainerStyle={styles.menuListContent}>
+        <ScrollView
+          style={styles.menuList}
+          contentContainerStyle={styles.menuListContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          }
+        >
           {isLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={colors.primary} />
@@ -116,15 +282,29 @@ const MenusScreen: React.FC = () => {
           ) : filteredMenus.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>🍽️</Text>
-              <Text style={styles.emptyTitle}>No menu available</Text>
+              <Text style={styles.emptyTitle}>
+                {searchQuery ? 'No results found' : 'No menu available'}
+              </Text>
               <Text style={styles.emptyText}>
-                Check back later or select a different dining hall
+                {searchQuery
+                  ? 'Try adjusting your search or filters'
+                  : 'Check back later or select a different dining hall'}
               </Text>
             </View>
           ) : (
-            filteredMenus.map((item) => (
-              <MenuItemCard key={item.id} item={item} onLog={() => console.log('Log meal')} />
-            ))
+            <>
+              <Text style={styles.resultsCount}>
+                {filteredMenus.length} item{filteredMenus.length !== 1 ? 's' : ''} found
+              </Text>
+              {filteredMenus.map((item) => (
+                <MenuItemCard
+                  key={item.id}
+                  item={item}
+                  onLog={() => handleLogMeal(item)}
+                  showDiningHall={selectedHall === null}
+                />
+              ))}
+            </>
           )}
         </ScrollView>
       </View>
@@ -132,78 +312,20 @@ const MenusScreen: React.FC = () => {
   );
 };
 
-const MenuItemCard: React.FC<{
-  item: MenuItemWithNutrition;
-  onLog: () => void;
-}> = ({ item, onLog }) => {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <TouchableOpacity
-      style={styles.menuCard}
-      onPress={() => setExpanded(!expanded)}
-      activeOpacity={0.9}
-    >
-      <View style={styles.menuCardHeader}>
-        <View style={styles.menuCardInfo}>
-          <Text style={styles.menuItemName}>{item.name}</Text>
-          {item.station && <Text style={styles.menuItemStation}>{item.station}</Text>}
-          
-          {/* Dietary Flags */}
-          <View style={styles.tags}>
-            {item.is_vegan && <View style={[styles.tag, styles.tagVegan]}><Text style={styles.tagText}>Vegan</Text></View>}
-            {item.is_vegetarian && !item.is_vegan && <View style={[styles.tag, styles.tagVegetarian]}><Text style={styles.tagText}>Vegetarian</Text></View>}
-            {item.contains_gluten && <View style={styles.tag}><Text style={styles.tagText}>Contains Gluten</Text></View>}
-          </View>
-        </View>
-
-        {item.nutrition && (
-          <View style={styles.menuCardCalories}>
-            <Text style={styles.calorieNumber}>{item.nutrition.calories}</Text>
-            <Text style={styles.calorieLabel}>kcal</Text>
-          </View>
-        )}
-      </View>
-
-      {expanded && item.nutrition && (
-        <View style={styles.menuCardExpanded}>
-          <View style={styles.divider} />
-          
-          {/* Nutrition Info */}
-          <View style={styles.nutritionGrid}>
-            <NutritionItem label="Protein" value={`${item.nutrition.protein_g}g`} color={colors.protein} />
-            <NutritionItem label="Carbs" value={`${item.nutrition.carbs_g}g`} color={colors.carbs} />
-            <NutritionItem label="Fat" value={`${item.nutrition.fat_g}g`} color={colors.fat} />
-          </View>
-
-          {item.allergen_info && item.allergen_info.length > 0 && (
-            <View style={styles.allergenSection}>
-              <Text style={styles.allergenLabel}>Allergens:</Text>
-              <Text style={styles.allergenText}>{item.allergen_info.join(', ')}</Text>
-            </View>
-          )}
-
-          <TouchableOpacity style={styles.logButton} onPress={onLog} activeOpacity={0.8}>
-            <Text style={styles.logButtonText}>+ Log This Meal</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-};
-
-const NutritionItem: React.FC<{ label: string; value: string; color: string }> = ({
-  label,
-  value,
-  color,
-}) => (
-  <View style={styles.nutritionItem}>
-    <View style={[styles.nutritionDot, { backgroundColor: color }]} />
-    <View>
-      <Text style={styles.nutritionValue}>{value}</Text>
-      <Text style={styles.nutritionLabel}>{label}</Text>
-    </View>
-  </View>
+const FilterChip: React.FC<{
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}> = ({ label, active, onPress }) => (
+  <TouchableOpacity
+    style={[styles.filterChip, active && styles.filterChipActive]}
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+      {label}
+    </Text>
+  </TouchableOpacity>
 );
 
 const styles = StyleSheet.create({
@@ -216,13 +338,91 @@ const styles = StyleSheet.create({
   },
   dateHeader: {
     backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
   },
   dateText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.base,
     fontWeight: '600',
+    color: colors.white,
+  },
+  searchSection: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.gray100,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  searchIcon: {
+    fontSize: 18,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: fontSize.base,
+    color: colors.text,
+    paddingVertical: spacing.md,
+  },
+  clearIcon: {
+    fontSize: 28,
+    color: colors.textLight,
+    fontWeight: '300',
+  },
+  filterButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: colors.gray100,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  filterIcon: {
+    fontSize: 20,
+  },
+  dietaryFiltersSection: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  filterChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  filterChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.gray100,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  filterChipActive: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.secondary,
+  },
+  filterChipText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: colors.text,
+  },
+  filterChipTextActive: {
     color: colors.white,
   },
   section: {
@@ -240,8 +440,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   hallsScroll: {
-    paddingRight: spacing.lg,
     gap: spacing.sm,
+    paddingRight: spacing.lg,
   },
   hallChip: {
     paddingHorizontal: spacing.lg,
@@ -264,11 +464,11 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   mealButtons: {
-    flexDirection: 'row',
     gap: spacing.sm,
+    paddingRight: spacing.lg,
   },
   mealButton: {
-    flex: 1,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     backgroundColor: colors.gray100,
     borderRadius: borderRadius.lg,
@@ -318,119 +518,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
   },
-  menuCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-  },
-  menuCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  menuCardInfo: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  menuItemName: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  menuItemStation: {
+  resultsCount: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
-  },
-  tags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginTop: spacing.xs / 2,
-  },
-  tag: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs / 2,
-    backgroundColor: colors.gray200,
-    borderRadius: borderRadius.sm,
-  },
-  tagVegan: {
-    backgroundColor: colors.secondary + '20',
-  },
-  tagVegetarian: {
-    backgroundColor: colors.secondary + '20',
-  },
-  tagText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-    color: colors.text,
-  },
-  menuCardCalories: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  calorieNumber: {
-    fontSize: fontSize['2xl'],
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  calorieLabel: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-  },
-  menuCardExpanded: {
-    marginTop: spacing.md,
-    gap: spacing.md,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  nutritionGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  nutritionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  nutritionDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  nutritionValue: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  nutritionLabel: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-  },
-  allergenSection: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  allergenLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  allergenText: {
-    flex: 1,
-    fontSize: fontSize.sm,
-    color: colors.error,
-  },
-  logButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-  },
-  logButtonText: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
-    color: colors.white,
+    marginBottom: spacing.sm,
   },
 });
 
