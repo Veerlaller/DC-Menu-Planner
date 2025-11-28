@@ -232,7 +232,14 @@ const TodayScreen: React.FC = () => {
 
         {/* Quick Actions */}
         <View style={styles.actionsSection}>
-          <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            activeOpacity={0.8}
+            onPress={() => {
+              // @ts-ignore - Navigate to WeeklyStats
+              navigation.navigate('WeeklyStats');
+            }}
+          >
             <Text style={styles.actionEmoji}>📊</Text>
             <Text style={styles.actionText}>View Weekly Stats</Text>
           </TouchableOpacity>

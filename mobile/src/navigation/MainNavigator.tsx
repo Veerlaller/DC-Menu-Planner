@@ -1,27 +1,45 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, fontSize } from '../constants/theme';
 
-// Import screens (will create these next)
+// Import screens
 import TodayScreen from '../screens/main/TodayScreen';
 import MenusScreen from '../screens/main/MenusScreen';
 import HungryNowScreen from '../screens/main/HungryNowScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
+import WeeklyStatsScreen from '../screens/main/WeeklyStatsScreen';
 
 export type MainTabParamList = {
-  Today: undefined;
+  TodayTab: undefined;
   Menus: undefined;
   HungryNow: undefined;
   Profile: undefined;
 };
 
+export type TodayStackParamList = {
+  Today: undefined;
+  WeeklyStats: undefined;
+};
+
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const TodayStack = createStackNavigator<TodayStackParamList>();
+
+// Stack navigator for Today tab
+const TodayStackNavigator: React.FC = () => {
+  return (
+    <TodayStack.Navigator screenOptions={{ headerShown: false }}>
+      <TodayStack.Screen name="Today" component={TodayScreen} />
+      <TodayStack.Screen name="WeeklyStats" component={WeeklyStatsScreen} />
+    </TodayStack.Navigator>
+  );
+};
 
 // Simple icon component (you can replace with react-native-vector-icons later)
 const TabIcon: React.FC<{ name: string; focused: boolean }> = ({ name, focused }) => {
   const icons: { [key: string]: string } = {
-    Today: '📊',
+    TodayTab: '📊',
     Menus: '🍽️',
     HungryNow: '🔔',
     Profile: '👤',
@@ -49,8 +67,9 @@ export const MainNavigator: React.FC = () => {
       })}
     >
       <Tab.Screen 
-        name="Today" 
-        component={TodayScreen}
+        name="TodayTab"
+        component={TodayStackNavigator}
+        options={{ tabBarLabel: 'Today' }}
       />
       <Tab.Screen 
         name="Menus" 
