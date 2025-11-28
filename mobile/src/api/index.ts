@@ -155,11 +155,10 @@ export const getDailySummary = async (date?: string): Promise<DailySummary> => {
 };
 
 export const logMeal = async (
-  userId: string,
   mealData: Partial<MealLog>
 ): Promise<MealLog> => {
   const response = await apiClient.post<ApiResponse<MealLog>>(
-    `/users/${userId}/meal-logs`,
+    '/meals/log',
     mealData
   );
   if (response.data.success && response.data.data) {
@@ -168,9 +167,21 @@ export const logMeal = async (
   throw new Error(response.data.error || 'Failed to log meal');
 };
 
-export const deleteMealLog = async (userId: string, mealLogId: string): Promise<void> => {
+export const getMealLogs = async (date?: string): Promise<MealLog[]> => {
+  const params = date ? { date } : {};
+  const response = await apiClient.get<ApiResponse<MealLog[]>>(
+    '/meals/logs',
+    { params }
+  );
+  if (response.data.success && response.data.data) {
+    return response.data.data;
+  }
+  throw new Error(response.data.error || 'Failed to fetch meal logs');
+};
+
+export const deleteMealLog = async (mealLogId: string): Promise<void> => {
   const response = await apiClient.delete<ApiResponse<void>>(
-    `/users/${userId}/meal-logs/${mealLogId}`
+    `/meals/logs/${mealLogId}`
   );
   if (!response.data.success) {
     throw new Error(response.data.error || 'Failed to delete meal log');
@@ -248,14 +259,27 @@ export const getMenuByHallAndMeal = async (
 };
 
 // ============================================
-// HUNGRY NOW
+// HUNGRY NOW & RECOMMENDATIONS
 // ============================================
 
-export const getHungryNowRecommendations = async (
-  userId: string
-): Promise<HungryNowRecommendation> => {
+export const getHungryNowRecommendations = async (): Promise<HungryNowRecommendation> => {
   const response = await apiClient.get<ApiResponse<HungryNowRecommendation>>(
-    `/users/${userId}/hungry-now`
+    '/recommendations/now'
+  );
+  if (response.data.success && response.data.data) {
+    return response.data.data;
+  }
+  throw new Error(response.data.error || 'Failed to get recommendations');
+};
+
+export const getRecommendationsByMeal = async (
+  mealType: string,
+  date?: string
+): Promise<MenuItemWithNutrition[]> => {
+  const params = date ? { date } : {};
+  const response = await apiClient.get<ApiResponse<MenuItemWithNutrition[]>>(
+    `/recommendations/${mealType}`,
+    { params }
   );
   if (response.data.success && response.data.data) {
     return response.data.data;
@@ -269,6 +293,9 @@ export const getHungryNowRecommendations = async (
 
 export const useMockApi = {
   getDailySummary: async (): Promise<DailySummary> => {
+    // Simulate a delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     return {
       date: new Date().toISOString().split('T')[0],
       consumed_calories: 1200,
@@ -279,11 +306,44 @@ export const useMockApi = {
       target_protein: 150,
       target_carbs: 250,
       target_fat: 70,
-      meals_logged: [],
+      meals_logged: [
+        {
+          id: 'meal-1',
+          user_id: 'user-1',
+          menu_item_id: 'item-1',
+          logged_at: new Date(Date.now() - 3600000).toISOString(),
+          servings: 1,
+          menu_item: {
+            id: 'item-1',
+            menu_day_id: 'menu-1',
+            name: 'Scrambled Eggs',
+            station: 'Breakfast Bar',
+            is_vegetarian: true,
+            is_vegan: false,
+            contains_gluten: false,
+            contains_dairy: true,
+            contains_nuts: false,
+            allergen_info: ['eggs', 'dairy'],
+            nutrition: {
+              id: 'n1',
+              menu_item_id: 'item-1',
+              calories: 200,
+              protein_g: 13,
+              carbs_g: 3,
+              fat_g: 15,
+            },
+          },
+        },
+      ],
     };
   },
 
   getAvailableMenus: async (): Promise<MenuItemWithNutrition[]> => {
+    // Simulate a delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const today = new Date().toISOString().split('T')[0];
+    
     return [
       {
         id: '1',
@@ -291,6 +351,8 @@ export const useMockApi = {
         name: 'Grilled Chicken Breast',
         category: 'entree',
         station: 'Grill',
+        meal_type: 'lunch',
+        date: today,
         is_vegetarian: false,
         is_vegan: false,
         contains_gluten: false,
@@ -304,6 +366,133 @@ export const useMockApi = {
           protein_g: 31,
           carbs_g: 0,
           fat_g: 3.6,
+          serving_size: '4 oz',
+        },
+        dining_hall: {
+          id: 'hall-1',
+          name: 'Latitude 38',
+          short_name: 'Latitude',
+          is_active: true,
+        },
+      },
+      {
+        id: '2',
+        menu_day_id: 'menu-1',
+        name: 'Quinoa Buddha Bowl',
+        category: 'entree',
+        station: 'Plant Forward',
+        meal_type: 'lunch',
+        date: today,
+        is_vegetarian: true,
+        is_vegan: true,
+        contains_gluten: false,
+        contains_dairy: false,
+        contains_nuts: false,
+        allergen_info: [],
+        nutrition: {
+          id: 'n2',
+          menu_item_id: '2',
+          calories: 420,
+          protein_g: 18,
+          carbs_g: 65,
+          fat_g: 12,
+          serving_size: '1 bowl',
+        },
+        dining_hall: {
+          id: 'hall-1',
+          name: 'Latitude 38',
+          short_name: 'Latitude',
+          is_active: true,
+        },
+      },
+      {
+        id: '3',
+        menu_day_id: 'menu-2',
+        name: 'Salmon Fillet',
+        category: 'entree',
+        station: 'Seafood',
+        meal_type: 'dinner',
+        date: today,
+        is_vegetarian: false,
+        is_vegan: false,
+        contains_gluten: false,
+        contains_dairy: false,
+        contains_nuts: false,
+        allergen_info: ['fish'],
+        nutrition: {
+          id: 'n3',
+          menu_item_id: '3',
+          calories: 280,
+          protein_g: 40,
+          carbs_g: 0,
+          fat_g: 13,
+          serving_size: '6 oz',
+        },
+        dining_hall: {
+          id: 'hall-2',
+          name: 'Segundo Dining Commons',
+          short_name: 'Segundo',
+          is_active: true,
+        },
+      },
+      {
+        id: '4',
+        menu_day_id: 'menu-1',
+        name: 'Mediterranean Salad',
+        category: 'salad',
+        station: 'Salad Bar',
+        meal_type: 'lunch',
+        date: today,
+        is_vegetarian: true,
+        is_vegan: true,
+        contains_gluten: false,
+        contains_dairy: false,
+        contains_nuts: false,
+        allergen_info: [],
+        nutrition: {
+          id: 'n4',
+          menu_item_id: '4',
+          calories: 180,
+          protein_g: 8,
+          carbs_g: 25,
+          fat_g: 7,
+          serving_size: '1 bowl',
+        },
+        dining_hall: {
+          id: 'hall-1',
+          name: 'Latitude 38',
+          short_name: 'Latitude',
+          is_active: true,
+        },
+      },
+      {
+        id: '5',
+        menu_day_id: 'menu-2',
+        name: 'Turkey Burger',
+        category: 'entree',
+        station: 'Grill',
+        meal_type: 'dinner',
+        date: today,
+        is_vegetarian: false,
+        is_vegan: false,
+        contains_gluten: true,
+        contains_dairy: false,
+        contains_nuts: false,
+        allergen_info: ['wheat'],
+        nutrition: {
+          id: 'n5',
+          menu_item_id: '5',
+          calories: 320,
+          protein_g: 28,
+          carbs_g: 35,
+          fat_g: 8,
+          serving_size: '1 burger',
+        },
+        dining_hall: {
+          id: 'hall-2',
+          name: 'Segundo Dining Commons',
+          short_name: 'Segundo',
+          is_active: true,
         },
       },
     ];

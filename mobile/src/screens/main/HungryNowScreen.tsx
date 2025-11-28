@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,17 +9,25 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useStore } from '../../store/useStore';
-import { MenuItemWithNutrition } from '../../types';
-import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
+import { MenuItemWithNutrition, DiningHall, MealType } from '../../types';
+import { RecommendationCard } from '../../components/RecommendationCard';
+import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants/theme';
 import { getAvailableMenus } from '../../api';
 import { useAuth } from '../../hooks/useAuth';
+
+interface RecommendationData {
+  hall: DiningHall | null;
+  mealType: MealType | null;
+  items: MenuItemWithNutrition[];
+  reason: string;
+  hours?: string;
+}
 
 const HungryNowScreen: React.FC = () => {
   const { userProfile, userPreferences } = useStore();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [recommendations, setRecommendations] = useState<MenuItemWithNutrition[]>([]);
-  const [recommendedHall, setRecommendedHall] = useState<string | null>(null);
+  const [recommendation, setRecommendation] = useState<RecommendationData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const getRecommendations = async () => {
@@ -35,16 +43,40 @@ const HungryNowScreen: React.FC = () => {
       
       if (!menuItems || menuItems.length === 0) {
         setError('No menu items available today. The dining hall menus may not be loaded yet.');
-        setRecommendations([]);
-        setRecommendedHall(null);
+        setRecommendation(null);
         return;
       }
       
+      // Determine current time and meal period
+      const now = new Date();
+      const currentHour = now.getHours();
+      let currentMealType: MealType;
+      
+      if (currentHour < 10) {
+        currentMealType = 'breakfast';
+      } else if (currentHour < 15) {
+        currentMealType = 'lunch';
+      } else if (currentHour < 20) {
+        currentMealType = 'dinner';
+      } else {
+        currentMealType = 'late_night';
+      }
+      
+      // Filter for current meal period
+      let currentMealItems = menuItems.filter(
+        (item) => item.meal_type === currentMealType
+      );
+      
+      // If no items for current meal, show all available
+      if (currentMealItems.length === 0) {
+        currentMealItems = menuItems;
+      }
+      
       // Filter based on user preferences
-      let filteredItems = menuItems;
+      let filteredItems = currentMealItems;
       
       if (userPreferences) {
-        filteredItems = menuItems.filter((item) => {
+        filteredItems = currentMealItems.filter((item) => {
           // Check vegetarian/vegan restrictions
           if (userPreferences.is_vegan && !item.is_vegan) return false;
           if (userPreferences.is_vegetarian && !item.is_vegetarian) return false;
@@ -53,7 +85,6 @@ const HungryNowScreen: React.FC = () => {
           // Check allergens
           if (userPreferences.is_gluten_free && item.contains_gluten) return false;
           if (userPreferences.is_dairy_free && item.contains_dairy) return false;
-          if (userPreferences.is_dairy_free && item.contains_nuts) return false;
           
           // Check specific allergies
           if (userPreferences.allergies && userPreferences.allergies.length > 0) {
@@ -70,39 +101,99 @@ const HungryNowScreen: React.FC = () => {
       
       if (filteredItems.length === 0) {
         setError('No menu items match your dietary restrictions. Try adjusting your preferences.');
-        setRecommendations([]);
-        setRecommendedHall(null);
+        setRecommendation(null);
         return;
       }
       
-      // Sort by protein content for simplicity (could be more sophisticated)
-      const sortedItems = filteredItems.sort(
-        (a, b) => (b.nutrition?.protein_g || 0) - (a.nutrition?.protein_g || 0)
-      );
+      // Score items based on user goals
+      const scoredItems = filteredItems.map((item) => {
+        let score = 0;
+        const nutrition = item.nutrition;
+        
+        if (!nutrition) return { item, score: 0 };
+        
+        const proteinRatio = (nutrition.protein_g || 0) / Math.max(nutrition.calories || 1, 1);
+        const fatRatio = (nutrition.fat_g || 0) / Math.max(nutrition.calories || 1, 1);
+        
+        if (userProfile?.goal === 'cut') {
+          // Prioritize high protein, lower calories
+          score += (nutrition.protein_g || 0) * 2;
+          score -= ((nutrition.calories || 0) / 100);
+          score += proteinRatio * 100;
+        } else if (userProfile?.goal === 'bulk') {
+          // Prioritize high calories and protein
+          score += (nutrition.calories || 0) / 10;
+          score += (nutrition.protein_g || 0) * 1.5;
+        } else {
+          // Balanced approach
+          score += (nutrition.protein_g || 0);
+          score += proteinRatio * 50;
+        }
+        
+        return { item, score };
+      });
       
-      // Take top 3 items
-      const topRecommendations = sortedItems.slice(0, 3);
+      // Sort by score and take top 5
+      const topItems = scoredItems
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5)
+        .map(({ item }) => item);
       
-      setRecommendedHall('UC Davis Dining Commons');
-      setRecommendations(topRecommendations);
+      // Get the dining hall from the first item
+      const hall = topItems[0]?.dining_hall || null;
+      
+      // Generate recommendation reason
+      let reason = '';
+      if (userProfile?.goal === 'cut') {
+        reason = 'High-protein, lower-calorie options to support your cutting goals';
+      } else if (userProfile?.goal === 'bulk') {
+        reason = 'High-calorie, protein-rich meals perfect for building muscle';
+      } else {
+        reason = 'Balanced meals to help you maintain your current fitness level';
+      }
+      
+      // Mock dining hours (would come from API in production)
+      const hours = getMealHours(currentMealType);
+      
+      setRecommendation({
+        hall,
+        mealType: currentMealType,
+        items: topItems,
+        reason,
+        hours,
+      });
     } catch (error: any) {
       console.error('Failed to get recommendations:', error);
       setError(error.message || 'Failed to load menu recommendations. Please try again.');
-      setRecommendations([]);
-      setRecommendedHall(null);
+      setRecommendation(null);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const totalCalories = recommendations.reduce(
+  const getMealHours = (mealType: MealType): string => {
+    switch (mealType) {
+      case 'breakfast':
+        return '7:00 AM - 10:00 AM';
+      case 'lunch':
+        return '11:00 AM - 2:30 PM';
+      case 'dinner':
+        return '5:00 PM - 8:00 PM';
+      case 'late_night':
+        return '8:00 PM - 11:00 PM';
+      default:
+        return 'Check dining hall for hours';
+    }
+  };
+
+  const totalCalories = recommendation?.items.reduce(
     (sum, item) => sum + (item.nutrition?.calories || 0),
     0
-  );
-  const totalProtein = recommendations.reduce(
+  ) || 0;
+  const totalProtein = recommendation?.items.reduce(
     (sum, item) => sum + (item.nutrition?.protein_g || 0),
     0
-  );
+  ) || 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -135,7 +226,7 @@ const HungryNowScreen: React.FC = () => {
           </View>
         )}
 
-        {!recommendedHall && !error ? (
+        {!recommendation && !error ? (
           <View style={styles.promptCard}>
             <Text style={styles.promptTitle}>Ready to eat?</Text>
             <Text style={styles.promptText}>
@@ -154,27 +245,39 @@ const HungryNowScreen: React.FC = () => {
               )}
             </TouchableOpacity>
           </View>
-        ) : recommendedHall ? (
+        ) : recommendation ? (
           <>
             {/* Recommended Hall */}
             <View style={styles.recommendationCard}>
               <Text style={styles.recommendationLabel}>Recommended For You</Text>
-              <View style={styles.hallBadge}>
-                <Text style={styles.hallEmoji}>🏢</Text>
-                <Text style={styles.hallName}>{recommendedHall}</Text>
+              <View style={styles.hallInfo}>
+                <View style={styles.hallBadge}>
+                  <Text style={styles.hallEmoji}>🏢</Text>
+                  <View>
+                    <Text style={styles.hallName}>
+                      {recommendation.hall?.name || 'UC Davis Dining'}
+                    </Text>
+                    <Text style={styles.mealPeriod}>
+                      {recommendation.mealType?.charAt(0).toUpperCase() + 
+                       recommendation.mealType?.slice(1) || 'Current Meal'}
+                    </Text>
+                  </View>
+                </View>
+                {recommendation.hours && (
+                  <View style={styles.hoursInfo}>
+                    <Text style={styles.hoursIcon}>🕒</Text>
+                    <Text style={styles.hoursText}>{recommendation.hours}</Text>
+                  </View>
+                )}
               </View>
               <Text style={styles.recommendationReason}>
-                {userProfile?.goal === 'cut'
-                  ? 'Best high-protein, lower-calorie options'
-                  : userProfile?.goal === 'bulk'
-                  ? 'Great high-calorie meals for muscle building'
-                  : 'Balanced meals for maintenance'}
+                💡 {recommendation.reason}
               </Text>
             </View>
 
             {/* Meal Summary */}
             <View style={styles.summaryCard}>
-              <Text style={styles.summaryTitle}>Suggested Meal</Text>
+              <Text style={styles.summaryTitle}>Suggested Meal Totals</Text>
               <View style={styles.summaryRow}>
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryValue}>{totalCalories}</Text>
@@ -187,7 +290,7 @@ const HungryNowScreen: React.FC = () => {
                 </View>
                 <View style={styles.summaryDivider} />
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryValue}>{recommendations.length}</Text>
+                  <Text style={styles.summaryValue}>{recommendation.items.length}</Text>
                   <Text style={styles.summaryLabel}>items</Text>
                 </View>
               </View>
@@ -195,17 +298,23 @@ const HungryNowScreen: React.FC = () => {
 
             {/* Recommended Items */}
             <View style={styles.itemsSection}>
-              <Text style={styles.sectionTitle}>Recommended Items</Text>
-              {recommendations.map((item) => (
-                <RecommendedItem key={item.id} item={item} />
+              <Text style={styles.sectionTitle}>Top Recommendations</Text>
+              {recommendation.items.map((item, index) => (
+                <RecommendationCard
+                  key={item.id}
+                  item={item}
+                  ranking={index + 1}
+                  reason={
+                    index === 0
+                      ? `Best match for your ${userProfile?.goal || 'fitness'} goals`
+                      : undefined
+                  }
+                  onLog={() => console.log('Log meal:', item.id)}
+                />
               ))}
             </View>
 
             {/* Actions */}
-            <TouchableOpacity style={styles.actionButton} activeOpacity={0.8}>
-              <Text style={styles.actionButtonText}>Log This Meal</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={getRecommendations}
@@ -215,7 +324,10 @@ const HungryNowScreen: React.FC = () => {
               {isLoading ? (
                 <ActivityIndicator color={colors.primary} />
               ) : (
-                <Text style={styles.secondaryButtonText}>Get New Recommendation</Text>
+                <>
+                  <Text style={styles.secondaryButtonIcon}>🔄</Text>
+                  <Text style={styles.secondaryButtonText}>Get New Recommendations</Text>
+                </>
               )}
             </TouchableOpacity>
           </>
@@ -246,28 +358,6 @@ const HungryNowScreen: React.FC = () => {
   );
 };
 
-const RecommendedItem: React.FC<{ item: MenuItemWithNutrition }> = ({ item }) => (
-  <View style={styles.itemCard}>
-    <View style={styles.itemInfo}>
-      <Text style={styles.itemName}>{item.name}</Text>
-      <Text style={styles.itemStation}>{item.station}</Text>
-      {item.nutrition && (
-        <View style={styles.itemMacros}>
-          <Text style={styles.itemMacro}>
-            {item.nutrition.calories} cal
-          </Text>
-          <Text style={styles.itemMacroDot}>•</Text>
-          <Text style={styles.itemMacro}>
-            {item.nutrition.protein_g}g protein
-          </Text>
-        </View>
-      )}
-    </View>
-    <View style={styles.itemBadge}>
-      <Text style={styles.itemBadgeText}>✓</Text>
-    </View>
-  </View>
-);
 
 const InfoItem: React.FC<{ emoji: string; text: string }> = ({ emoji, text }) => (
   <View style={styles.infoItem}>
@@ -349,22 +439,49 @@ const styles = StyleSheet.create({
     color: colors.primary,
     textTransform: 'uppercase',
   },
+  hallInfo: {
+    gap: spacing.md,
+  },
   hallBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   hallEmoji: {
-    fontSize: 32,
+    fontSize: 40,
   },
   hallName: {
     fontSize: fontSize.xl,
     fontWeight: '700',
     color: colors.text,
+    lineHeight: 26,
+  },
+  mealPeriod: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  hoursInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+  },
+  hoursIcon: {
+    fontSize: 16,
+  },
+  hoursText: {
+    fontSize: fontSize.sm,
+    color: colors.text,
+    fontWeight: '500',
   },
   recommendationReason: {
     fontSize: fontSize.base,
-    color: colors.textSecondary,
+    color: colors.text,
+    lineHeight: 22,
   },
   summaryCard: {
     backgroundColor: colors.white,
@@ -401,77 +518,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   itemsSection: {
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   sectionTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontSize: fontSize.xl,
+    fontWeight: '700',
     color: colors.text,
-  },
-  itemCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  itemInfo: {
-    flex: 1,
-    gap: spacing.xs / 2,
-  },
-  itemName: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  itemStation: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
-  itemMacros: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    marginTop: spacing.xs / 2,
-  },
-  itemMacro: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
-  itemMacroDot: {
-    fontSize: fontSize.sm,
-    color: colors.gray300,
-  },
-  itemBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.secondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  itemBadgeText: {
-    fontSize: fontSize.lg,
-    color: colors.white,
-  },
-  actionButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.lg,
-    borderRadius: borderRadius.lg,
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.white,
   },
   secondaryButton: {
     backgroundColor: colors.white,
     paddingVertical: spacing.lg,
     borderRadius: borderRadius.lg,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
     borderWidth: 2,
     borderColor: colors.primary,
+    ...shadow.sm,
+  },
+  secondaryButtonIcon: {
+    fontSize: 20,
   },
   secondaryButtonText: {
     fontSize: fontSize.base,

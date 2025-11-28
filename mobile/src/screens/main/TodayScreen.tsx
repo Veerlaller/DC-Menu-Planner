@@ -11,10 +11,13 @@ import {
 } from 'react-native';
 import { useStore } from '../../store/useStore';
 import { MacroProgressBar } from '../../components/MacroProgressBar';
-import { colors, spacing, fontSize, borderRadius } from '../../constants/theme';
+import { MealCard } from '../../components/MealCard';
+import { colors, spacing, fontSize, borderRadius, shadow } from '../../constants/theme';
 import { getDailySummary, useMockApi } from '../../api';
+import { useNavigation } from '@react-navigation/native';
 
 const TodayScreen: React.FC = () => {
+  const navigation = useNavigation();
   const { userProfile, dailySummary, setDailySummary, setIsLoading, isLoading } = useStore();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -177,29 +180,35 @@ const TodayScreen: React.FC = () => {
           ) : (
             <View style={styles.mealsList}>
               {dailySummary.meals_logged.map((meal) => (
-                <View key={meal.id} style={styles.mealCard}>
-                  <View style={styles.mealInfo}>
-                    <Text style={styles.mealName}>{meal.menu_item.name}</Text>
-                    <Text style={styles.mealMeta}>
-                      {meal.servings > 1 ? `${meal.servings}x servings` : '1 serving'} •{' '}
-                      {new Date(meal.logged_at).toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                  </View>
-                  {meal.menu_item.nutrition && (
-                    <View style={styles.mealNutrition}>
-                      <Text style={styles.mealCalories}>
-                        {(meal.menu_item.nutrition.calories || 0) * meal.servings} kcal
-                      </Text>
-                    </View>
-                  )}
-                </View>
+                <MealCard
+                  key={meal.id}
+                  meal={meal}
+                  onPress={() => {
+                    // TODO: Navigate to meal detail screen
+                    console.log('Meal pressed:', meal.id);
+                  }}
+                  onDelete={() => {
+                    // TODO: Implement delete meal
+                    console.log('Delete meal:', meal.id);
+                  }}
+                />
               ))}
             </View>
           )}
         </View>
+
+        {/* Log Meal Button */}
+        <TouchableOpacity
+          style={styles.logMealButton}
+          onPress={() => {
+            // @ts-ignore - Navigate to Menus tab
+            navigation.navigate('Menus');
+          }}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.logMealIcon}>🍽️</Text>
+          <Text style={styles.logMealText}>Log a Meal</Text>
+        </TouchableOpacity>
 
         {/* Quick Actions */}
         <View style={styles.actionsSection}>
@@ -355,34 +364,23 @@ const styles = StyleSheet.create({
   mealsList: {
     gap: spacing.sm,
   },
-  mealCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
+  logMealButton: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.xl,
     padding: spacing.lg,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    ...shadow.md,
   },
-  mealInfo: {
-    flex: 1,
+  logMealIcon: {
+    fontSize: 28,
   },
-  mealName: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: spacing.xs / 2,
-  },
-  mealMeta: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
-  mealNutrition: {
-    alignItems: 'flex-end',
-  },
-  mealCalories: {
-    fontSize: fontSize.base,
-    fontWeight: '600',
-    color: colors.primary,
+  logMealText: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    color: colors.white,
   },
   actionsSection: {
     flexDirection: 'row',
